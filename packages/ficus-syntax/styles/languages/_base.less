@@ -1,0 +1,67 @@
+.text1 { color: @text1; }
+.text2 { color: @text2; }
+
+.primary1 { color: @primary1; }
+.primary2 { color: @primary2; }
+.primary3 { color: @primary3; }
+
+.secondary1 { color: @secondary1; }
+.secondary2 { color: @secondary2; }
+
+.tertiary1 { color: @tertiary1; }
+.tertiary2 { color: @tertiary2; }
+.tertiary3 { color: @tertiary3; }
+
+// Mixins -----------------------------------
+.punctuation-mixin(@punctuation:@text2) {
+  .punctuation,
+  .bracket,
+  .brace {
+    color: @punctuation;
+  }
+  .string .punctuation {
+    .text2();
+  }
+}
+
+.meta {
+  .text2();
+}
+
+.html.elements,
+.entity,
+.tag,
+.function-call {
+  .primary1();
+}
+
+.variable,
+.attribute-name,
+.character.escape {
+  .primary2();
+}
+
+.support {
+  .text1();
+}
+
+.string,
+.constant,
+.storage.type {
+  .primary3();
+}
+
+.keyword,
+.storage {
+  .secondary1();
+}
+
+.punctuation-mixin();
+
+.comment {
+  .text2();
+  font-style: italic;
+}
+
+.bold { font-weight: bold; }
+.italic { font-style: italic; }

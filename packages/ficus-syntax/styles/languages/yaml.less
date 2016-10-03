@@ -1,0 +1,24 @@
+// YAML
+
+.yaml {
+  .tag {
+    .primary1();
+  }
+  .string {
+    .text1();
+
+    &.quoted {
+      .secondary1();
+    }
+  }
+  .constant {
+    .primary3();
+  }
+  .punctuation {
+    .text2();
+
+    &.string {
+      .secondary1();
+    }
+  }
+}

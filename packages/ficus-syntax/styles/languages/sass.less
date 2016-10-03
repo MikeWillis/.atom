@@ -1,0 +1,30 @@
+// SASS
+
+.sass {
+  .at-rule .at-rule {
+    &,
+    > .punctuation{
+      .primary1();
+    }
+  }
+  .mixin + .function,
+  .include + .function {
+    .secondary1();
+  }
+  &.property-value {
+    .primary3();
+    .function {
+      .primary2();
+    }
+    .punctuation {
+      .text2();
+    }
+  }
+  &.variable.parameter.url {
+    .primary3();
+  }
+  &.class,
+  &.parent-selector-suffix {
+    .primary1();
+  }
+}

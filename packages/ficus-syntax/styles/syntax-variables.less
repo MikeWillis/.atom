@@ -1,0 +1,45 @@
+@import "colors";
+
+// Official Syntax Variables -----------------------------------
+
+// General colors
+@syntax-text-color: @syntax-fg;
+@syntax-cursor-color: @syntax-accent;
+@syntax-selection-color: @syntax-selection;
+@syntax-selection-flash-color: @syntax-accent;
+@syntax-background-color: @syntax-bg;
+
+// Guide colors
+@syntax-wrap-guide-color: @syntax-guide;
+@syntax-indent-guide-color: @syntax-guide;
+@syntax-invisible-character-color: fade(@text2, 25%);
+
+// For find and replace markers
+@syntax-result-marker-color: fade(@syntax-accent, 16%);
+@syntax-result-marker-color-selected: @syntax-accent;
+
+// Gutter colors
+@syntax-gutter-text-color: @text2;
+@syntax-gutter-text-color-selected: @syntax-accent;
+@syntax-gutter-background-color: transparent;
+@syntax-gutter-background-color-selected: @syntax-selection-gutter;
+
+// For git diff in the gutter
+@syntax-color-added: @gre;
+@syntax-color-modified: @ora;
+@syntax-color-renamed: @blu;
+@syntax-color-removed: @red;
+
+// For language entity colors
+@syntax-color-variable: @primary2;
+@syntax-color-constant: @primary3;
+@syntax-color-property: @tertiary2;
+@syntax-color-value:    @primary3;
+@syntax-color-function: @primary3;
+@syntax-color-method:   @primary3;
+@syntax-color-class:    @primary3;
+@syntax-color-keyword:  @secondary1;
+@syntax-color-tag:      @primary1;
+@syntax-color-attribute:@primary2;
+@syntax-color-import:   @secondary1;
+@syntax-color-snippet:  @secondary1;

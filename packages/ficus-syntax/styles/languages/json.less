@@ -1,0 +1,21 @@
+// JSON
+
+.json {
+  .string {
+    .primary1();
+    .punctuation {
+      .text2();
+    }
+  }
+  .value {
+    & > .string {
+      .primary2();
+      .punctuation {
+        .text2();
+      }
+    }
+    .constant {
+      .secondary2();
+    }
+  }
+}

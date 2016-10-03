@@ -1,0 +1,74 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-22112-1jo8qhq\\package.tgz",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-22112-1jo8qhq\\package.tgz",
+        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-22112-1jo8qhq\\package.tgz",
+        "type": "local"
+      },
+      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116819-22112-17u5hsi"
+    ]
+  ],
+  "_from": "..\\d-116819-22112-1jo8qhq\\package.tgz",
+  "_id": "tool-bar-atom@1.6.3",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/tool-bar-atom",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-22112-1jo8qhq\\package.tgz",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
+    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-22112-1jo8qhq\\package.tgz",
+    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-22112-1jo8qhq\\package.tgz",
+    "type": "local"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "file:..\\d-116819-22112-1jo8qhq\\package.tgz",
+  "_shasum": "81037bbd3097f790eca682d109b6fb9100390abe",
+  "_shrinkwrap": null,
+  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-22112-1jo8qhq\\package.tgz",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116819-22112-17u5hsi",
+  "bugs": {
+    "url": "https://github.com/jeselxe/tool-bar-atom/issues"
+  },
+  "consumedServices": {
+    "tool-bar": {
+      "versions": {
+        "^0 || ^1": "consumeToolBar"
+      }
+    }
+  },
+  "dependencies": {},
+  "description": "A tool-bar plugin that adds an atom toolbar with many commonly used actions",
+  "devDependencies": {},
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "homepage": "https://github.com/jeselxe/tool-bar-atom#readme",
+  "keywords": [
+    "toolbar",
+    "tool-bar"
+  ],
+  "license": "MIT",
+  "main": "./lib/tool-bar-atom",
+  "name": "tool-bar-atom",
+  "optionalDependencies": {},
+  "packageDependencies": {
+    "tool-bar": "^0.1.0"
+  },
+  "readme": "# Toolbar for Atom - a tool-bar plugin\n\n## Description\n\nAn atom-tool-bar plugin that adds many commonly used actions in the tool-bar.\n\n## Preview\n\n![Screenshot](https://github.com/jeselxe/tool-bar-atom/raw/master/screenshot.png)\n\nAvailable toolbar buttons:\n\n* **open file**\n* **open folder**\n* **save file**\n* **list projects** (requires `project-manager` package)\n* -\n* **split left**\n* **split right**\n* -\n* **toggle fullscreen**\n* **toggle tree-view**\n* **toggle minimap**\n* **toggle exposé** (requires `expose` package)\n* -\n* **auto indent**\n* **fold all**\n* **unfold all**\n* **beautify** (requires `atom-beautify` package)\n* -\n* **run script** (requires `script` package)\n* **run by line** (requires `script` package)\n* **stop script** (requires `script` package)\n* **configure** (requires `script` package)\n* -\n* **opens a terminal (split bottom)**  (requires `term2` or `term3` or `terminal-plus` package)\n* **reload window** (if in Dev Mode)\n* **toggle devtools** (if in Dev Mode)\n* **Git commands** (requires `git-plus` package)\n* -\n* **markdown preview**\n* **HTML preview**\n* -\n* **settings**\n\n**Note**: The toolbar buttons that require other packages will only appear if you have those packages installed\n\n## Installation\n\nFirst you have to install the `tool-bar` package which is required:\n\n```bash\napm install tool-bar\n```\n\nThen you install the `tool-bar-atom` package:\n\n```bash\napm install tool-bar-atom\n```\n\n## License\n\nThe MIT License\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeselxe/tool-bar-atom.git"
+  },
+  "version": "1.6.3"
+}

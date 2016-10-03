@@ -1,0 +1,64 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-11693-10936-1eykjj8\\package.tgz",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-11693-10936-1eykjj8\\package.tgz",
+        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-11693-10936-1eykjj8\\package.tgz",
+        "type": "local"
+      },
+      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-11693-10936-14pyndg"
+    ]
+  ],
+  "_from": "..\\d-11693-10936-1eykjj8\\package.tgz",
+  "_id": "atom-wrap-in-tag@0.6.0",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/atom-wrap-in-tag",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-11693-10936-1eykjj8\\package.tgz",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
+    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-11693-10936-1eykjj8\\package.tgz",
+    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-11693-10936-1eykjj8\\package.tgz",
+    "type": "local"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "file:..\\d-11693-10936-1eykjj8\\package.tgz",
+  "_shasum": "2cea0a9df0e685d88ab1fb943c946fdff762a7c1",
+  "_shrinkwrap": null,
+  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-11693-10936-1eykjj8\\package.tgz",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-11693-10936-14pyndg",
+  "activationCommands": {
+    "atom-workspace": "wrap-in-tag:wrap"
+  },
+  "bugs": {
+    "url": "https://github.com/sanusart/atom-wrap-in-tag/issues"
+  },
+  "dependencies": {},
+  "description": "Wrap tag around selection",
+  "devDependencies": {},
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "homepage": "https://github.com/sanusart/atom-wrap-in-tag#readme",
+  "keywords": [],
+  "license": "MIT",
+  "main": "./lib/wrap-in-tag",
+  "name": "atom-wrap-in-tag",
+  "optionalDependencies": {},
+  "readme": "# Atom wrap in tag\n\nSimplest package for [Atom](https://atom.io/) that wraps tag around selection - similar functionality found on other editors like PhpStorm, SublimeText, TextMate etc.\n\nJust select a word or phrase and hit <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>w</kbd>\n\nHit spacebar key to continue typing attribute after the opening tag.\n\n## Installation\n\n`apm install atom-wrap-in-tag`\n\nor find _atom-wrap-in-tag_ in **Settings** > **Install** tab\n\n![A screenshot of your package](https://raw.githubusercontent.com/sanusart/atom-wrap-in-tag/master/images/screenshot.gif)\n\n### License:\n\nMIT\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanusart/atom-wrap-in-tag.git"
+  },
+  "version": "0.6.0"
+}

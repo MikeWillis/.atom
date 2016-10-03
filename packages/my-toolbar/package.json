@@ -1,0 +1,16 @@
+{
+  "description": "My own custom toolbar",
+  "main": "./lib/my-toolbar",
+  "name": "my-toolbar",
+    "consumedServices": {
+      "tool-bar": {
+        "versions": {
+          "^0 || ^1": "consumeToolBar"
+        }
+      }
+    },
+  "packageDependencies": {
+    "tool-bar": "^0.1.0"
+  },
+  "version": "0.0.0"
+}

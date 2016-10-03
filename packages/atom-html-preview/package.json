@@ -1,0 +1,75 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116827-11036-12pi93v\\package.tgz",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116827-11036-12pi93v\\package.tgz",
+        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116827-11036-12pi93v\\package.tgz",
+        "type": "local"
+      },
+      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116827-11036-17fzaul"
+    ]
+  ],
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".coffee": [
+        "lib/atom-html-preview-view.coffee",
+        "lib/atom-html-preview.coffee"
+      ],
+      ".json": [
+        "package.json"
+      ]
+    }
+  },
+  "_from": "..\\d-116827-11036-12pi93v\\package.tgz",
+  "_id": "atom-html-preview@0.1.22",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/atom-html-preview",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116827-11036-12pi93v\\package.tgz",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
+    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116827-11036-12pi93v\\package.tgz",
+    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116827-11036-12pi93v\\package.tgz",
+    "type": "local"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "file:..\\d-116827-11036-12pi93v\\package.tgz",
+  "_shasum": "1b6a3d9636c2b2411e84e1c95ab2121ea54e153e",
+  "_shrinkwrap": null,
+  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116827-11036-12pi93v\\package.tgz",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116827-11036-17fzaul",
+  "bugs": {
+    "url": "https://github.com/webBoxio/atom-html-preview/issues"
+  },
+  "dependencies": {
+    "atom-space-pen-views": "^2.0.5"
+  },
+  "description": "A live preview tool for Atom Editor.",
+  "devDependencies": {},
+  "engines": {
+    "atom": ">=0.174.0 <2.0.0"
+  },
+  "homepage": "https://github.com/webBoxio/atom-html-preview",
+  "license": "MIT",
+  "main": "./lib/atom-html-preview",
+  "name": "atom-html-preview",
+  "optionalDependencies": {},
+  "readme": "# Atom HTML Preview\n\nA live preview tool for Atom Editor.\n\nInstall:\n```bash\napm install atom-html-preview\n```\n\nToogle HTML Preview:\n\nPress `CTRL-P` in editor to open Preview.\n\n![Atom HTML Preview](https://dl.dropboxusercontent.com/u/20947008/webbox/atom/atom-html-preview.png)\n\nAn example with [Twitter Bootstrap 3 Package][1]\n\n![Atom HTML Preview with Bootstrap](https://dl.dropboxusercontent.com/u/20947008/webbox/atom/atom-bootstrap-3.gif)\n\n[1]: http://atom.io/packages/atom-bootstrap3\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/webBoxio/atom-html-preview.git"
+  },
+  "version": "0.1.22"
+}

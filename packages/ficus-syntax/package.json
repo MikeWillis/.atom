@@ -1,0 +1,67 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+        "type": "local"
+      },
+      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116822-11376-1a55skf"
+    ]
+  ],
+  "_from": "..\\d-116822-11376-1tyf3zr\\package.tgz",
+  "_id": "ficus-syntax@1.0.0",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/ficus-syntax",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
+    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+    "type": "local"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "file:..\\d-116822-11376-1tyf3zr\\package.tgz",
+  "_shasum": "51415716a2fce48679ba6cb9468f9a679ab58493",
+  "_shrinkwrap": null,
+  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116822-11376-1a55skf",
+  "bugs": {
+    "url": "https://github.com/protesilaos/ficus-light-syntax/issues"
+  },
+  "dependencies": {},
+  "description": "High contrast theme. Inspired by figs.",
+  "devDependencies": {},
+  "engines": {
+    "atom": ">=1.0.0"
+  },
+  "homepage": "https://github.com/protesilaos/ficus-light-syntax#readme",
+  "keywords": [
+    "syntax",
+    "magenta",
+    "violet",
+    "green",
+    "light"
+  ],
+  "license": "MIT",
+  "name": "ficus-syntax",
+  "optionalDependencies": {},
+  "readme": "# Ficus syntax theme (light version)\n\nA high contrast theme inspired by figs. The most prevalent colours are variants of magenta, violet, green, yellow, and cyan.\n\n*Ficus* comes in standalone light and dark variants (see further info below).\n\n## Screenshot\n\n![ficus light screenshot](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_sample.png)\n\n*The font in the screenshot is [Hack](https://github.com/chrissimpkins/Hack), set at 14px*.  \n*Demo code by http://codemirror.net/mode/javascript/index.html*  \n*The UI theme is https://atom.io/themes/atom-material-ui*.\n\n## Download\n\nSearch for `ficus-syntax` in Settings > Install > Themes. Or install it directly using the command:\n\n```shell\napm install ficus-syntax\n```\n\n## Further information\n\nProject page: [http://www.protesilaos.com/ficus](http://www.protesilaos.com/ficus)\n\nFicus dark version: [https://atom.io/themes/ficus-dark-syntax](https://atom.io/themes/ficus-dark-syntax)\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/protesilaos/ficus-light-syntax.git"
+  },
+  "theme": "syntax",
+  "version": "1.0.0"
+}

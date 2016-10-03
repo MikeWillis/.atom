@@ -1,0 +1,49 @@
+// Color scheme -----------------------------------
+
+@dbg: #27152C; // Dark background
+@dhl: #37253C; // Dark highlight
+@dt2: #67556C; // Dark bg text secondary
+@dt1: #97859C; // Dark bg text primary
+
+@lbg: #EDF1E5; // Light background
+@lhl: #DDE1D5; // Light highlight
+@lt2: #8D9185; // Light bg text secondary
+@lt1: #5D6155; // Light bg text primary
+
+@red: #AA3A5A; // Red
+@ora: #AC6E00; // Orange
+@yel: #ACA60A; // Yellow
+@gre: #84A33C; // Green
+
+@cya: #6CACAB; // Cyan
+@blu: #6D75CD; // Blue
+@vio: #A46ACD; // Violet
+@mag: #CB5E9A; // Magenta
+
+// Visual order -----------------------------------
+
+@primary1: @mag;
+@primary2: @vio;
+@primary3: @gre;
+
+@secondary1: @yel;
+@secondary2: @cya;
+
+@tertiary1: @blu;
+@tertiary2: @red;
+@tertiary3: @ora;
+
+// Theme variant ----------------------------------
+
+@text1: @lt1; // text primary
+@text2: @lt2; // text secondary
+@syntax-bg: @lbg; // background
+@syntax-guide: @lhl; // background highlight
+
+// Atom Base vars ---------------------------------
+
+@syntax-fg: @text1; // text primary
+@syntax-accent: @tertiary1; // cursor, markdown preview links, etc.
+@syntax-selection: @syntax-guide;
+@syntax-selection-gutter: @syntax-guide;
+@syntax-cursor-line: fade(@syntax-selection, 26%); // needs to be semi-transparent to show serach results

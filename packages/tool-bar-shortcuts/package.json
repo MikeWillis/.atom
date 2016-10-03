@@ -1,0 +1,74 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-14344-12axccl\\package.tgz",
+        "scope": null,
+        "escapedName": null,
+        "name": null,
+        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-14344-12axccl\\package.tgz",
+        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-14344-12axccl\\package.tgz",
+        "type": "local"
+      },
+      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116819-14344-1nnzlcl"
+    ]
+  ],
+  "_from": "..\\d-116819-14344-12axccl\\package.tgz",
+  "_id": "tool-bar-shortcuts@0.1.5",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/tool-bar-shortcuts",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-14344-12axccl\\package.tgz",
+    "scope": null,
+    "escapedName": null,
+    "name": null,
+    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-14344-12axccl\\package.tgz",
+    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-14344-12axccl\\package.tgz",
+    "type": "local"
+  },
+  "_requiredBy": [
+    "#USER"
+  ],
+  "_resolved": "file:..\\d-116819-14344-12axccl\\package.tgz",
+  "_shasum": "5f0d838572a1bcbbe5ede4e78441a86f6fd1e47c",
+  "_shrinkwrap": null,
+  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116819-14344-12axccl\\package.tgz",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116819-14344-1nnzlcl",
+  "bugs": {
+    "url": "https://github.com/JostCrow/atom-toolbar-shortcuts/issues"
+  },
+  "consumedServices": {
+    "tool-bar": {
+      "versions": {
+        "^0.1.0": "consumeToolBar"
+      }
+    }
+  },
+  "dependencies": {},
+  "description": "An atom-tool-bar plugin that adds an 'shortcuts toolbar' with many commonly used actions",
+  "devDependencies": {},
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "homepage": "https://github.com/JostCrow/atom-toolbar-shortcuts#readme",
+  "keywords": [
+    "toolbar",
+    "tool-bar"
+  ],
+  "license": "MIT",
+  "main": "./lib/tool-bar-shortcuts",
+  "name": "tool-bar-shortcuts",
+  "optionalDependencies": {},
+  "packageDependencies": {
+    "tool-bar": "0.1.1"
+  },
+  "readme": "# Toolbar Shortcuts - a tool-bar plugin\n\n## Description\n\nAn atom-tool-bar plugin that adds many commonly used actions in the tool-bar.\n\nThis is just a preview of how it can look.\n\n![screenshot](https://raw.githubusercontent.com/JostCrow/atom-toolbar-shortcuts/master/screenshot.png)\n\nAvaileble options:\n1. Open file\n2. Open folder\n* Toggle git projects (requires **git-projects** package)\n* Toggle Ungit (requires **atom-ungit** package)\n* Toggle Blame (requires **blame** package)\n* Open Terminal (requires **terminal-plus** package)\n* Split left\n* Split bottom\n* Comment line\n* Comment block (requires **block-comment** package)\n* Toggle Markdown preview\n* Toggle Fullscreen\n* Toggle Tree-view\n* Toggle Minimap (requires **minimap** package)\n* Settings\n* Dev Tools\n* Reload window\n\n*The toolbar buttons that require other packages will only appear if you have those packages installed and if you have selected them in the settings*\n\n## Sugestions\n\nIf you have sugestions for this package. Create an issue.\n\n## Installation\n\nFirst you have to install the `tool-bar` package which is required:\n\n```bash\napm install tool-bar\n```\n\nThen you install the `tool-bar-shortcuts` package:\n\n```bash\napm install tool-bar-shortcuts\n```\n\n## TODO\n\n- [x] Create package settings to choose wich items you want to show in the toolbar.\n- [ ] Change package settings to reorder toolbar items (including separators).\n- [ ] Reload the toolbar on settings change.\n\n## License\n\nThe MIT License\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JostCrow/atom-toolbar-shortcuts.git"
+  },
+  "version": "0.1.5"
+}

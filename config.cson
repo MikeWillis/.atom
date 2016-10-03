@@ -1,0 +1,71 @@
+"*":
+  "Remote-FTP":
+    autoUploadOnSave: "never"
+  "atom-beautify":
+    general:
+      _analyticsUserId: "5246c0c3-a2dc-4b16-a60d-15048682f57f"
+  "autoclose-html":
+    forceInline: [
+      "*"
+    ]
+    makeNeverCloseSelfClosing: false
+  "autocomplete-plus":
+    backspaceTriggersAutocomplete: true
+  core:
+    disabledPackages: [
+      "tool-bar-shortcuts"
+      "tool-bar-atom"
+      "tool-bar-almighty"
+      "block-comment"
+      "php-integrator-autocomplete-plus"
+      "php-integrator-base"
+      "emmet"
+      "react"
+    ]
+    openEmptyEditorOnStart: false
+    themes: [
+      "one-light-ui"
+      "one-light-syntax"
+    ]
+  editor:
+    fontSize: 13
+    preferredLineLength: 180
+    tabLength: 3
+  "exception-reporting":
+    userId: "440e2cab-8a62-95d1-86c2-6ee7abef895d"
+  "git-clone":
+    target_directory: "/My Projects/GithubProjects"
+  "language-babel":
+    autoIndentJSX: true
+  minimap:
+    plugins:
+      "minimap-autohide": true
+      "minimap-autohideDecorationsZIndex": 0
+  "one-light-ui":
+    layoutMode: "Compact"
+  "php-integrator-autocomplete-plus":
+    automaticallyAddUseStatements: false
+    disableBuiltinAutocompletion: false
+  "php-integrator-base": {}
+  "tool-bar":
+    iconSize: "16px"
+  "tree-view":
+    showOnRightSide: true
+  welcome:
+    showOnStartup: false
+".babel.regexp.source":
+  editor:
+    preferredLineLength: 180
+    tabLength: 3
+".coffee.jsx.source":
+  editor:
+    preferredLineLength: 180
+    tabLength: 4
+".js.jsx.source":
+  editor:
+    preferredLineLength: 180
+    tabLength: 4
+".languagebabel.ttlextension":
+  editor:
+    preferredLineLength: 180
+    tabLength: 3

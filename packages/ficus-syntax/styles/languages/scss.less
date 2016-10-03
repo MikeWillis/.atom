@@ -1,0 +1,76 @@
+// SCSS
+
+.scss {
+  .at-rule .at-rule {
+    &,
+    > .punctuation{
+      .primary1();
+    }
+  }
+  .mixin + .function,
+  .include + .function {
+    .secondary1();
+  }
+  &.property-value {
+    .primary3();
+    .function {
+      .primary2();
+    }
+    .punctuation {
+      .text2();
+    }
+  }
+  &.variable.parameter.url {
+    .primary3();
+  }
+  &.class,
+  &.parent-selector-suffix {
+    .primary1();
+  }
+
+  .support {
+    &.function {
+      .secondary2();
+    }
+  }
+
+  .keyword {
+    &.control {
+      .primary1();
+    }
+  }
+
+  .punctuation {
+    &.definition {
+      &.keyword {
+        .primary1();
+      }
+
+      &.string {
+        .secondary1();
+      }
+
+      &.constant {
+        .primary3();
+      }
+    }
+  }
+
+  .variable {
+    &.interpolation {
+      .primary3();
+    }
+  }
+
+  .string {
+    &.quoted {
+      .secondary1();
+    }
+  }
+
+  .entity {
+    &.name.function {
+      .secondary2();
+    }
+  }
+}

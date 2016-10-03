@@ -1,0 +1,38 @@
+// Coffee
+
+.coffee {
+  &.source {
+    .text1();
+  }
+
+  .string {
+    &.quoted {
+      .secondary1();
+    }
+  }
+
+  .punctuation {
+    &.definition {
+      &.string {
+        .secondary1();
+      }
+    }
+  }
+
+  .keyword {
+    &.control {
+      .primary3();
+      &.anchor {
+        .secondary2();
+      }
+    }
+
+    &.operator {
+      .text1();
+    }
+
+    &.other {
+      .secondary2();
+    }
+  }
+}
