@@ -1,5 +1,5 @@
 # Project Manager
-<!-- [![Build status](https://travis-ci.org/danielbrodin/atom-project-manager.svg?branch=master)](https://travis-ci.org/danielbrodin/atom-project-manager/) -->
+[![Build status](https://travis-ci.org/danielbrodin/atom-project-manager.svg?branch=master)](https://travis-ci.org/danielbrodin/atom-project-manager/)
 [![apm](https://img.shields.io/apm/dm/project-manager.svg)](https://atom.io/packages/project-manager)
 [![apm](https://img.shields.io/apm/v/project-manager.svg)]()
 
@@ -40,8 +40,8 @@ setting    | Type      | Description                                            
 `title`    | `string`  | Projects title. Used in the projects list                                                                                                | `''`                  
 `paths`    | `array`   | The folders that will open in the tree view. First path is the main one that counts as the project.                                                   | `[]`                  
 `settings` | `Object`  | Enables you to set project specific settings. Everything that goes in the `config.cson` file can go here. It also supports scoped settings.           | `{}`                  
-`icon`     | `string`  | Icon that shows in the projects list. It's class-based so can either be a class already provided by Atom like `icon-squirell` or a class of your own. | `'icon-chevron-right'`
-`devMode`  | `boolean` | `true` if project should open in dev mode                                                                                                             | `false`               
+`icon`     | `string`  | Icon that shows in the projects list. It's class-based so can either be a class already provided by Atom like `icon-squirrel` or a class of your own. You can find a list of all icons on [octicons.github.com](https://octicons.github.com/). | `'icon-chevron-right'`
+`devMode`  | `boolean` | `true` if project should open in dev mode. [Look here][devMode] for more info.                                                                        | `false`               
 `group`    | `string`  | Adds a group to the projects list that can be used to group and filter projects                                                                       | `null`                
 `template` | `string`  | If you add a project in the `projects.cson` file without `paths` it will count as a template. This way you can easily share settings between projects | `null`                
 
@@ -74,22 +74,24 @@ function consumeProjectManager({ getProjects, getProject, saveProject, openProje
   /**
    * Get an array containing all projects.
    * The callback will be run each time a project is added.
+   * Returns a Disposable.
    */
-  getProjects(projects => {
+  disposables.add( getProjects(projects => {
     // Do something with the projects.
-  });
+  }));
 
   /**
    * Get the currently active project.
    * The callback will be run whenever the active project changes.
+   * Returns a Disposable.
    */
-  getProject(project => {
+  disposables.add( getProject(project => {
     if (project) {
       // We have an active project.
     } else {
       // Project is either not loaded yet, or there is no project saved.
     }
-  });
+  }));
 
   /**
    * Can take either a project recieved from getProjects/getProject or
@@ -122,4 +124,4 @@ All PR's should:
 - Pass the [eslint](https://atom.io/packages/linter-eslint) linter
 - Add a test when it makes sense, which should be most of the time
 
---------
+[devMode]: https://atom.io/docs/api/v1.11.2/AtomEnvironment#instance-open

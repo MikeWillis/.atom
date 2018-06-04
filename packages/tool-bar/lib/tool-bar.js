@@ -1,32 +1,27 @@
-'use babel';
+const ToolBarManager = require('./tool-bar-manager');
+const ToolBarView = require('./tool-bar-view');
+const TouchBarManager = require('./touch-bar-manager');
 
-import ToolBarManager from './tool-bar-manager';
-import ToolBarView from './tool-bar-view';
+let toolBarView = null;
+let touchBarManager = null;
 
-let toolBar = null;
+exports.activate = function () {
+  toolBarView = new ToolBarView();
+  touchBarManager = new TouchBarManager();
+};
 
-export function activate () {
-  toolBar = new ToolBarView();
-}
+exports.deactivate = function () {
+  toolBarView.destroy();
+  toolBarView = null;
+  touchBarManager.destroy();
+  touchBarManager = null;
+};
 
-export function deactivate () {
-  toolBar.destroy();
-  toolBar = null;
-}
+exports.provideToolBar = function provideToolBar () {
+  return (group) => new ToolBarManager(group, toolBarView, touchBarManager);
+};
 
-export function provideToolBar () {
-  return (group) => new ToolBarManager(group, toolBar);
-}
-
-export function provideToolBarLegacy () {
-  return (group) => {
-    const Grim = require('grim');
-    Grim.deprecate('Please update to the latest tool-bar provider service.');
-    return new ToolBarManager(group, toolBar, true);
-  };
-}
-
-export const config = {
+exports.config = {
   visible: {
     type: 'boolean',
     default: true,
@@ -48,9 +43,12 @@ export const config = {
     type: 'boolean',
     default: true,
     order: 4
+  },
+  useTouchBar: {
+    title: 'Use TouchBar',
+    description: 'Show seven first tool bar buttons in the TouchBar',
+    type: 'boolean',
+    default: true,
+    order: 5
   }
 };
-
-if (typeof atom.workspace.addHeaderPanel !== 'function') {
-  delete config.fullWidth;
-}

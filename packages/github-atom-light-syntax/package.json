@@ -2,40 +2,40 @@
   "_args": [
     [
       {
-        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-2440-ljf9ts\\package.tgz",
+        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
         "scope": null,
         "escapedName": null,
         "name": null,
-        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-2440-ljf9ts\\package.tgz",
-        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-2440-ljf9ts\\package.tgz",
+        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
+        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
         "type": "local"
       },
-      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116822-2440-wl9xmh"
+      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-117516-8472-mw1txa.vja1vbcsor"
     ]
   ],
-  "_from": "..\\d-116822-2440-ljf9ts\\package.tgz",
-  "_id": "github-atom-light-syntax@0.2.0",
+  "_from": "..\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
+  "_id": "github-atom-light-syntax@0.5.0",
   "_inCache": true,
   "_installable": true,
   "_location": "/github-atom-light-syntax",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-2440-ljf9ts\\package.tgz",
+    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
     "scope": null,
     "escapedName": null,
     "name": null,
-    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-2440-ljf9ts\\package.tgz",
-    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-2440-ljf9ts\\package.tgz",
+    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
+    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
     "type": "local"
   },
   "_requiredBy": [
     "#USER"
   ],
-  "_resolved": "file:..\\d-116822-2440-ljf9ts\\package.tgz",
-  "_shasum": "92900fb4fcea252b05a28d2b481854bec1ba1780",
+  "_resolved": "file:..\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
+  "_shasum": "5b19edf61fb76c49d6f6278dda1629ded779435a",
   "_shrinkwrap": null,
-  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-2440-ljf9ts\\package.tgz",
-  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116822-2440-wl9xmh",
+  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117516-8472-125olbx.3fx5xt7qfr\\package.tgz",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-117516-8472-mw1txa.vja1vbcsor",
   "author": {
     "name": "GitHub Inc."
   },
@@ -74,13 +74,23 @@
     "url": "git+https://github.com/primer/github-atom-light-syntax.git"
   },
   "scripts": {
-    "_commit": "git commit -am $(npm view github-syntax-theme-generator version)",
-    "_update": "npm update && cp -rf node_modules/github-syntax-theme-generator/build/atom/github-light/styles . && cp node_modules/github-syntax-theme-generator/build/atom/github-light/index.less .",
+    "_commit": "git commit -am \"$(npm view github-syntax-theme-generator version)\"",
+    "_update": "npm update && cp -rf node_modules/github-syntax-theme-generator/build/atom/github-light/*.less ./styles/",
     "_version": "apm publish $(npm view github-syntax-theme-generator version)",
-    "ship": "npm run _update && npm run _commit && npm run _version && git push && git push --tags",
+    "ship": "npm run _update && npm run _commit && npm run _version",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "style": "index.less",
   "theme": "syntax",
-  "version": "0.2.0"
+  "version": "0.5.0",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".json": [
+        "package.json"
+      ]
+    },
+    "folders": []
+  }
 }

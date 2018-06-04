@@ -1,27 +1,20 @@
 'use babel';
 
-import mobx, { observable, computed, extendObservable, action } from 'mobx';
+import { observable, computed, extendObservable, action, toJS } from 'mobx';
 import fs from 'fs';
-import os from 'os';
+import untildify from 'untildify';
 import CSON from 'season';
 
 export default class Project {
   @observable props = {}
+  @observable stats = null;
 
   @computed get title() {
     return this.props.title;
   }
 
   @computed get paths() {
-    const paths = this.props.paths.map(path => {
-      if (path.charAt(0) === '~') {
-        return path.replace('~', os.homedir());
-      }
-
-      return path;
-    });
-
-    return paths;
+    return this.props.paths.map(path => untildify(path));
   }
 
   @computed get group() {
@@ -30,6 +23,23 @@ export default class Project {
 
   @computed get rootPath() {
     return this.paths[0];
+  }
+
+  @computed get settings() {
+    return toJS(this.props.settings);
+  }
+
+  @computed get source() {
+    return this.props.source;
+  }
+
+  @computed get lastModified() {
+    let mtime = new Date(0);
+    if (this.stats) {
+      mtime = this.stats.mtime;
+    }
+
+    return mtime;
   }
 
   @computed get isCurrent() {
@@ -48,6 +58,7 @@ export default class Project {
       group: '',
       paths: [],
       icon: 'icon-chevron-right',
+      color: '',
       settings: {},
       devMode: false,
       template: null,
@@ -62,22 +73,43 @@ export default class Project {
 
   updateProps(props) {
     extendObservable(this.props, props);
+    this.setFileStats();
   }
 
   getProps() {
-    return mobx.toJS(this.props);
+    return toJS(this.props);
   }
 
-  get lastModified() {
-    let mtime = 0;
-    try {
-      const stats = fs.statSync(this.rootPath);
-      mtime = stats.mtime;
-    } catch (e) {
-      mtime = new Date(0);
-    }
+  getChangedProps() {
+    const { ...props } = this.getProps();
+    const defaults = Project.defaultProps;
 
-    return mtime;
+    Object.keys(defaults).forEach((key) => {
+      switch (key) {
+        case 'settings': {
+          if (Object.keys(props[key]).length === 0) {
+            delete props[key];
+          }
+          break;
+        }
+
+        default: {
+          if (props[key] === defaults[key]) {
+            delete props[key];
+          }
+        }
+      }
+    });
+
+    return props;
+  }
+
+  @action setFileStats() {
+    fs.stat(this.rootPath, (err, stats) => {
+      if (!err) {
+        this.stats = stats;
+      }
+    });
   }
 
   /**

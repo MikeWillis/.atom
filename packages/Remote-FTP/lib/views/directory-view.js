@@ -1,194 +1,426 @@
-var __hasProp = {}.hasOwnProperty,
-	__extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-	$ = require('atom-space-pen-views').$,
-	FileView = require('./file-view'),
-	View = require('atom-space-pen-views').View;
+'use babel';
 
-module.exports = DirectoryView = (function (parent) {
+import { Emitter, CompositeDisposable } from 'atom';
+import path from 'path';
+import { $, View } from 'atom-space-pen-views';
+import { getIconHandler, checkTarget, recursiveViewDestroy } from '../helpers';
+import FileView from './file-view';
 
-	__extends(DirectoryView, parent);
+class DirectoryView extends View {
 
-	function DirectoryView () {
-		DirectoryView.__super__.constructor.apply(this, arguments);
-	}
+  static content() {
+    return this.li({
+      class: 'directory entry list-nested-item collapsed',
+      is: 'tree-view-directory',
+    }, () => {
+      this.div({
+        class: 'header list-item',
+        outlet: 'header',
+        is: 'tree-view-directory',
+      }, () => this.span({
+        class: 'name icon',
+        outlet: 'name',
+      }));
+      this.ol({
+        class: 'entries list-tree',
+        outlet: 'entries',
+      });
+    });
+  }
 
-	DirectoryView.content = function () {
-		return this.li({
-			'class': 'directory entry list-nested-item collapsed'
-		}, function () {
-			this.div({
-				'class': 'header list-item',
-				'outlet': 'header'
-			}, function () {
-				return this.span({
-					'class': 'name icon',
-					'outlet': 'name'
-				});
-			}.bind(this));
-			this.ol({
-				'class': 'entries list-tree',
-				'outlet': 'entries'
-			});
-		}.bind(this));
-	};
+  initialize(directory) {
+    // super.initialize(directory);
 
-	DirectoryView.prototype.initialize = function (directory) {
-		//DirectoryView.__super__.initialize.apply(this, arguments);
+    this.emitter = new Emitter();
+    this.subscriptions = new CompositeDisposable();
+    this.subsDrags = new CompositeDisposable();
 
-		var self = this;
+    this.item = directory;
+    this.name.text(this.item.name);
+    this.name.attr('data-name', this.item.name);
+    this.name.attr('data-path', this.item.remote);
 
-		self.item = directory;
-		self.name.text(self.item.name);
-		self.name.attr('data-name', self.item.name);
-		self.name.attr('data-path', self.item.remote);
-		self.name.addClass(self.item.type && self.item.type == 'l' ? 'icon-file-symlink-directory' : 'icon-file-directory');
+    const addIconToElement = getIconHandler();
+    if (addIconToElement) {
+      const element = this.name[0] || this.name;
+      const pathIco = this.item && this.item.local;
 
-		if (self.item.isExpanded || self.item.isRoot)
-			self.expand();
+      if (typeof pathIco === 'undefined') return;
 
-		if (self.item.isRoot)
-			self.addClass('project-root');
+      this.iconDisposable = addIconToElement(element, pathIco, { isDirectory: true });
+    } else {
+      this.name.addClass(this.item.type && this.item.type === 'l' ? 'icon-file-symlink-directory' : 'icon-file-directory');
+    }
 
-		// Trigger repaint
-		self.item.$folders.onValue(function () { self.repaint(); });
-		self.item.$files.onValue(function () { self.repaint(); });
-		self.item.$isExpanded.onValue(function () { self.setClasses(); });
-		self.item.on('destroyed', function () { self.destroy(); });
-		self.repaint();
+    if (this.item.isExpanded || this.item.isRoot) { this.expand(); }
 
-		// Events
-		self.on('mousedown', function (e) {
-			e.stopPropagation();
+    if (this.item.isRoot) {
+      this.addClass('project-root');
+      this.header.addClass('project-root-header');
+      this.name.addClass('icon-server').removeClass('icon-file-directory');
+    }
 
-			var view = $(this).view(),
-				button = e.originalEvent ? e.originalEvent.button : 0;
+    // Trigger repaint
+    this.triggers();
 
-			if (!view)
-				return;
+    this.repaint();
 
-			if (button === 0 || button == 2) {
-				if (!e.ctrlKey) {
-					$('.remote-ftp-view .selected').removeClass('selected');
-					$('.remote-ftp-view .entries.list-tree').removeClass('multi-select');
-				} else {
-					$('.remote-ftp-view .entries.list-tree').addClass('multi-select');
-				}
-				view.toggleClass('selected');
+    // Events
+    this.events();
 
-				if (view.item.status === 0)
-					view.open();
+    if (atom.config.get('Remote-FTP.tree.enableDragAndDrop')) {
+      this.dragEventsActivate();
+    }
+  }
 
-				if (button === 0)
-					view.toggle();
-			}
-		});
-		self.on('dblclick', function (e) {
-			e.stopPropagation();
+  triggers() {
+    this.subscriptions.add(
+      this.item.onChangeSelect(() => {
+        let lastSelected = atom.project['remoteftp-main'].treeView.lastSelected;
 
-			var view = $(this).view();
-			if (!view)
-				return;
+        if (this.item.isSelected) {
+          lastSelected.push(this);
+          lastSelected = lastSelected.reverse().slice(0, 2).reverse();
+        }
+      }),
+    );
 
-			view.open();
-		});
-	};
+    this.subscriptions.add(
+      this.item.onChangeItems(() => {
+        this.repaint();
+      }),
+    );
 
-	DirectoryView.prototype.destroy = function () {
-		this.item = null;
+    this.subscriptions.add(
+      this.item.onChangeExpanded(() => {
+        this.setClasses();
+      }),
+    );
 
-		this.remove();
-	};
+    this.subscriptions.add(
+      this.item.onDestroyed(() => {
+        this.destroy();
+      }),
+    );
+  }
 
-	DirectoryView.prototype.repaint = function (recursive) {
-		var self = this,
-			views = self.entries.children().map(function () { return $(this).view(); }).get(),
-			folders = [],
-			files = [];
+  onDidMouseDown(callback) {
+    this.subscriptions.add(
+      this.emitter.on('mousedown', (e) => {
+        callback(e);
+      }),
+    );
+  }
 
-		self.entries.children().detach();
+  onDidDbClick(callback) {
+    this.subscriptions.add(
+      this.emitter.on('dblclick', (e) => {
+        callback(e);
+      }),
+    );
+  }
 
-		if (self.item) self.item.folders.forEach(function (item) {
-			for (var a = 0, b = views.length; a < b; ++a)
-				if (views[a] && views[a] instanceof DirectoryView && views[a].item == item) {
-					folders.push(views[a]);
-					return;
-				}
-			folders.push(new DirectoryView(item));
-		});
-		if (self.item) self.item.files.forEach(function (item) {
-			for (var a = 0, b = views.length; a < b; ++a)
-				if (views[a] && views[a] instanceof FileView && views[a].item == item) {
-					files.push(views[a]);
-					return;
-				}
-			files.push(new FileView(item));
-		});
+  onDidChangeEnableDragAndDrop(callback) {
+    this.subsDrags.add(
+      this.emitter.on('enableDragAndDrop', () => {
+        callback();
+      }),
+    );
+  }
 
-		// TODO Destroy left over...
+  onDidDrop(callback) {
+    this.subsDrags.add(
+      this.emitter.on('drop', (e) => {
+        callback(e);
+      }),
+    );
+  }
 
-		views = folders.concat(files);
+  onDidDragStart(callback) {
+    this.subsDrags.add(
+      this.emitter.on('dragstart', (e) => {
+        callback(e);
+      }),
+    );
+  }
 
-		views.sort(function (a, b) {
-			if (a.constructor != b.constructor)
-				return a instanceof DirectoryView ? -1 : 1;
-			if (a.item.name == b.item.name)
-				return 0;
+  onDidDragOver(callback) {
+    this.subsDrags.add(
+      this.emitter.on('dragover', (e) => {
+        callback(e);
+      }),
+    );
+  }
 
-			return a.item.name.toLowerCase().localeCompare(b.item.name.toLowerCase());
-		});
+  onDidDragEnter(callback) {
+    this.subsDrags.add(
+      this.emitter.on('dragenter', (e) => {
+        callback(e);
+      }),
+    );
+  }
 
-		views.forEach(function (view) {
-			self.entries.append(view);
-		});
-	};
+  onDidDragLeave(callback) {
+    this.subsDrags.add(
+      this.emitter.on('dragleave', (e) => {
+        callback(e);
+      }),
+    );
+  }
 
-	DirectoryView.prototype.setClasses = function () {
-		if (this.item.isExpanded) {
-			this.addClass('expanded').removeClass('collapsed');
-		} else {
-			this.addClass('collapsed').removeClass('expanded');
-		}
-	};
+  events() {
+    this.on('dblclick', e => this.emitter.emit('dblclick', e));
+    this.on('mousedown', e => this.emitter.emit('mousedown', e));
 
-	DirectoryView.prototype.expand = function (recursive) {
-		this.item.isExpanded = true;
+    this.onDidMouseDown((e) => {
+      const self = e.currentTarget;
+      e.stopPropagation();
 
-		if (recursive) {
-			this.entries.children().each(function () {
-				var view = $(this).view();
-				if (view && view instanceof DirectoryView)
-					view.expand(true);
-			});
-		}
-	};
+      const view = $(self).view();
+      const button = e.originalEvent ? e.originalEvent.button : 0;
+      const selectKey = process.platform === 'darwin' ? 'metaKey' : 'ctrlKey'; // on mac the select key for multiple files is the meta key
+      const $selected = $('.remote-ftp-view .selected');
 
-	DirectoryView.prototype.collapse = function (recursive) {
-		this.item.isExpanded = false;
+      if (!view) return;
 
-		if (recursive) {
-			this.entries.children().each(function () {
-				var view = $(this).view();
-				if (view && view instanceof DirectoryView)
-					view.collapse(true);
-			});
-		}
-	};
+      if ((button === 0 || button === 2) && !(button === 2 && $selected.length > 1)) {
+        if (!e[selectKey]) {
+          $selected.removeClass('selected');
+          $('.remote-ftp-view .entries.list-tree').removeClass('multi-select');
+        } else {
+          $('.remote-ftp-view .entries.list-tree').addClass('multi-select');
+        }
+        view.toggleClass('selected');
 
-	DirectoryView.prototype.toggle = function (recursive) {
-		if (this.item.isExpanded)
-			this.collapse(recursive);
-		else
-			this.expand(recursive);
-	};
+        this.item.setIsSelected = view.hasClass('selected');
 
-	DirectoryView.prototype.open = function () {
-		this.item.open();
-	};
+        if (e.shiftKey) return;
 
-	DirectoryView.prototype.refresh = function () {
-		this.item.open();
-	};
+        if (button === 0 && !e[selectKey]) {
+          if (view.item.status === 0) {
+            view.open();
+            view.toggle();
+          }
 
-	return DirectoryView;
+          view.toggle();
+        }
+      }
+    });
 
-})(View);
+    this.onDidDbClick((e) => {
+      const self = e.currentTarget;
+      e.stopPropagation();
+
+      const view = $(self).view();
+
+      if (!view) return;
+
+      view.open();
+    });
+  }
+
+  dragEventsActivate() {
+    this.on('drop', e => this.emitter.emit('drop', e));
+    this.on('dragstart', e => this.emitter.emit('dragstart', e));
+    this.on('dragover', e => this.emitter.emit('dragover', e));
+    this.on('dragenter', e => this.emitter.emit('dragenter', e));
+    this.on('dragleave', e => this.emitter.emit('dragleave', e));
+
+    this.onDidDrop((e) => {
+      const self = e.currentTarget;
+      e.preventDefault();
+      e.stopPropagation();
+
+      self.classList.remove('selected');
+
+      if (!checkTarget(e)) return;
+
+      const ftp = atom.project['remoteftp-main'];
+      const $self = $(self);
+      const dataTransfer = e.originalEvent.dataTransfer;
+      const pathInfos = JSON.parse(dataTransfer.getData('pathInfos'));
+      const newPathInfo = $self.find('span[data-path]').attr('data-path');
+      const destPath = path.posix.join(newPathInfo, pathInfos.name);
+
+      if (pathInfos.fullPath === destPath) return;
+
+      ftp.client.rename(pathInfos.fullPath, destPath, (err) => {
+        if (err) console.error(err);
+
+        const sourceTree = ftp.treeView.resolve(path.posix.dirname(pathInfos.fullPath));
+        const destTree = ftp.treeView.resolve(path.posix.dirname(destPath));
+
+        // NOTE: Check the hierarchy.
+        if (sourceTree) {
+          sourceTree.open();
+          recursiveViewDestroy(sourceTree);
+        }
+
+        if (destTree) {
+          destTree.open();
+          recursiveViewDestroy(destTree);
+        }
+      });
+    });
+
+    this.onDidDragStart((e) => {
+      const target = $(e.target).find('.name');
+      const dataTransfer = e.originalEvent.dataTransfer;
+      const pathInfos = {
+        fullPath: target.data('path'),
+        name: target.data('name'),
+      };
+
+      dataTransfer.setData('pathInfos', JSON.stringify(pathInfos));
+      dataTransfer.effectAllowed = 'move';
+    });
+
+    this.onDidDragOver((e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    this.onDidDragEnter((e) => {
+      const self = e.currentTarget;
+      e.stopPropagation();
+
+      if (!checkTarget(e)) return;
+
+      self.classList.add('selected');
+    });
+
+    this.onDidDragLeave((e) => {
+      e.stopPropagation();
+
+      e.currentTarget.classList.remove('selected');
+    });
+  }
+
+  dragEventsDestroy() {
+    this.subsDrags.dispose();
+  }
+
+  dispose() {
+    this.subscriptions.dispose();
+    this.subsDrags.dispose();
+    this.emitter.dispose();
+  }
+
+  destroy() {
+    this.item = null;
+
+    if (this.iconDisposable) {
+      this.iconDisposable.dispose();
+      this.iconDisposable = null;
+    }
+
+    this.dispose();
+    this.remove();
+  }
+
+  getViews() {
+    return this.entries.children().map((err, item) => $(item).view()).get();
+  }
+
+  getItemViews(itemViews) {
+    const views = this.getViews() || itemViews;
+    const entries = {
+      folders: [],
+      files: [],
+    };
+
+    if (this.item) {
+      this.item.folders.forEach((item) => {
+        for (let a = 0, b = views.length; a < b; ++a) {
+          if (views[a] && views[a] instanceof DirectoryView && views[a].item === item) {
+            entries.folders.push(views[a]);
+            return;
+          }
+        }
+        entries.folders.push(new DirectoryView(item));
+      });
+
+      this.item.files.forEach((item) => {
+        for (let a = 0, b = views.length; a < b; ++a) {
+          if (views[a] && views[a] instanceof FileView && views[a].item === item) {
+            entries.files.push(views[a]);
+            return;
+          }
+        }
+        entries.files.push(new FileView(item));
+      });
+    }
+
+    return entries;
+  }
+
+  repaint() {
+    let views = this.getViews();
+
+    this.entries.children().detach();
+
+    const entries = this.getItemViews();
+
+    // TODO Destroy left over...
+    views = entries.folders.concat(entries.files);
+
+    views.sort((a, b) => {
+      if (a.constructor !== b.constructor) { return a instanceof DirectoryView ? -1 : 1; }
+      if (a.item.name === b.item.name) { return 0; }
+
+      return a.item.name.toLowerCase().localeCompare(b.item.name.toLowerCase());
+    });
+
+    views.forEach((view) => {
+      this.entries.append(view);
+    });
+  }
+
+  setClasses() {
+    if (this.item.isExpanded) {
+      this.addClass('expanded').removeClass('collapsed');
+    } else {
+      this.addClass('collapsed').removeClass('expanded');
+    }
+  }
+
+  expand(recursive) {
+    this.item.setIsExpanded = true;
+
+    if (recursive) {
+      this.entries.children().each((e, item) => {
+        const view = $(item).view();
+        if (view && view instanceof DirectoryView) { view.expand(true); }
+      });
+    }
+  }
+
+  collapse(recursive) {
+    this.item.setIsExpanded = false;
+
+    if (recursive) {
+      this.entries.children().each((e, item) => {
+        const view = $(item).view();
+        if (view && view instanceof DirectoryView) { view.collapse(true); }
+      });
+    }
+  }
+
+  toggle(recursive) {
+    if (this.item.isExpanded) {
+      this.collapse(recursive);
+    } else {
+      this.expand(recursive);
+    }
+  }
+
+  open() {
+    this.item.open();
+  }
+
+  refresh() {
+    this.item.open();
+  }
+}
+
+export default DirectoryView;

@@ -2,40 +2,40 @@
   "_args": [
     [
       {
-        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116829-7208-1852l7n\\package.tgz",
+        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-1161112-3144-1x98pe0\\package.tgz",
         "scope": null,
         "escapedName": null,
         "name": null,
-        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116829-7208-1852l7n\\package.tgz",
-        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116829-7208-1852l7n\\package.tgz",
+        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-1161112-3144-1x98pe0\\package.tgz",
+        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-1161112-3144-1x98pe0\\package.tgz",
         "type": "local"
       },
-      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116829-7208-18utdo6"
+      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-1161112-3144-1ire6bf"
     ]
   ],
-  "_from": "..\\d-116829-7208-1852l7n\\package.tgz",
-  "_id": "git-clone@0.1.5",
+  "_from": "..\\d-1161112-3144-1x98pe0\\package.tgz",
+  "_id": "git-clone@0.2.0",
   "_inCache": true,
   "_installable": true,
   "_location": "/git-clone",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116829-7208-1852l7n\\package.tgz",
+    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-1161112-3144-1x98pe0\\package.tgz",
     "scope": null,
     "escapedName": null,
     "name": null,
-    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116829-7208-1852l7n\\package.tgz",
-    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116829-7208-1852l7n\\package.tgz",
+    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-1161112-3144-1x98pe0\\package.tgz",
+    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-1161112-3144-1x98pe0\\package.tgz",
     "type": "local"
   },
   "_requiredBy": [
     "#USER"
   ],
-  "_resolved": "file:..\\d-116829-7208-1852l7n\\package.tgz",
-  "_shasum": "aa54ecfc59934ff597c5b4ebd1d4c314b08a738a",
+  "_resolved": "file:..\\d-1161112-3144-1x98pe0\\package.tgz",
+  "_shasum": "a3026360a36d8285db8a305cbb05396acda3b1e1",
   "_shrinkwrap": null,
-  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116829-7208-1852l7n\\package.tgz",
-  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116829-7208-18utdo6",
+  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-1161112-3144-1x98pe0\\package.tgz",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-1161112-3144-1ire6bf",
   "activationCommands": {
     "atom-workspace": "git-clone:clone"
   },
@@ -62,5 +62,5 @@
     "type": "git",
     "url": "git+https://github.com/brianchung808/git-clone.git"
   },
-  "version": "0.1.5"
+  "version": "0.2.0"
 }

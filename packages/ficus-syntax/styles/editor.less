@@ -1,8 +1,7 @@
 
 // Editor styles (background, gutter, guides)
 
-atom-text-editor,
-:host {
+atom-text-editor {
   color: @syntax-text-color;
   background-color: @syntax-background-color;
 
@@ -24,7 +23,8 @@ atom-text-editor,
   }
 
   .bracket-matcher .region {
-    border-bottom: 1px solid @syntax-accent;
+    border-bottom: 1px solid @syntax-cursor-color;
+    background-color: fadeout( @syntax-cursor-color, 80%);
   }
 
   .invisible-character {
@@ -81,6 +81,7 @@ atom-text-editor,
 
       &.cursor-line-no-selection {
         background-color: transparent;
+        font-weight: bold;
       }
 
       .icon-right {

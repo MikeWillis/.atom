@@ -1,10 +1,9 @@
-'use babel'
+'use strict'
+
+const include = require('./decorators/include')
+const DecorationManagement = require('./mixins/decoration-management')
 
 let Emitter, CompositeDisposable, LegacyAdapter, StableAdapter
-
-import include from './decorators/include'
-import DecorationManagement from './mixins/decoration-management'
-
 let nextModelId = 1
 
 /**
@@ -15,8 +14,11 @@ let nextModelId = 1
  * Their lifecycle follow the one of their target `TextEditor`, so they are
  * destroyed whenever their `TextEditor` is destroyed.
  */
-@include(DecorationManagement)
-export default class Minimap {
+class Minimap {
+  static initClass () {
+    include(this, DecorationManagement)
+    return this
+  }
   /**
    * Creates a new Minimap instance for the given `TextEditor`.
    *
@@ -161,6 +163,14 @@ export default class Minimap {
      */
     this.configDevicePixelRatioRounding = null
     /**
+     * A number of milliseconds which determines how often the minimap should redraw itself after
+     * detecting changes in the text editor. A value of 0 will cause the minimap to redraw
+     * immediately.
+     *
+     * @type {number}
+     * @access private
+     */
+    this.redrawDelay = 0
     /**
      * A boolean value to store whether this Minimap have been destroyed or not.
      *
@@ -176,6 +186,23 @@ export default class Minimap {
      * @access private
      */
     this.scrollPastEnd = false
+
+    /**
+     * An array of changes registered with textEditor.onDidChange() which have not yet been handled
+     *
+     * @type {Array}
+     * @access private
+     */
+    this.pendingChangeEvents = []
+
+    /**
+     * Timer reference which, once fired, will flush all the pending changes stored in
+     * this.pendingChangeEvents array.
+     *
+     * @type {Timer?}
+     * @access private
+     */
+    this.flushChangesTimer = null
 
     this.initializeDecorations()
 
@@ -232,7 +259,7 @@ export default class Minimap {
     }))
 
     subs.add(this.textEditor.onDidChange((changes) => {
-      this.emitChanges(changes)
+      this.scheduleChanges(changes)
     }))
     subs.add(this.textEditor.onDidDestroy(() => { this.destroy() }))
 
@@ -243,11 +270,7 @@ export default class Minimap {
     resulting in extra lines appearing at the end of the minimap.
     Forcing a whole repaint to fix that bug is suboptimal but works.
     */
-    const tokenizedBuffer = this.textEditor.tokenizedBuffer
-      ? this.textEditor.tokenizedBuffer
-      : this.textEditor.displayBuffer.tokenizedBuffer
-
-    subs.add(tokenizedBuffer.onDidTokenize(() => {
+    subs.add(this.textEditor.onDidTokenize(() => {
       this.emitter.emit('did-change-config')
     }))
   }
@@ -258,6 +281,9 @@ export default class Minimap {
   destroy () {
     if (this.destroyed) { return }
 
+    clearTimeout(this.flushChangesTimer)
+    this.flushChangesTimer = null
+    this.pendingChangeEvents = []
     this.removeAllDecorations()
     this.subscriptions.dispose()
     this.subscriptions = null
@@ -273,6 +299,41 @@ export default class Minimap {
    * @return {boolean} whether this Minimap has been destroyed or not
    */
   isDestroyed () { return this.destroyed }
+
+  /**
+   * Schedule changes from textEditor.onDidChange() to be handled at a later time
+   *
+   * @param  {Array} changes The changes to be scheduled
+   * @return void
+   * @access private
+   */
+  scheduleChanges (changes) {
+    this.pendingChangeEvents = this.pendingChangeEvents.concat(changes)
+
+    // Optimisation: If the redraw delay is set to 0, do not even schedule a timer
+    if (!this.redrawDelay) {
+      return this.flushChanges()
+    }
+
+    if (!this.flushChangesTimer) {
+      // If any changes happened within the timeout's delay, a timeout will already have been
+      // scheduled -> no need to schedule again
+      this.flushChangesTimer = setTimeout(() => { this.flushChanges() }, this.redrawDelay)
+    }
+  }
+
+  /**
+   * Flush all changes which have been scheduled for later processing by this.scheduleChanges()
+   *
+   * @return void
+   * @access private
+   */
+  flushChanges () {
+    clearTimeout(this.flushChangesTimer)
+    this.flushChangesTimer = null
+    this.emitChanges(this.pendingChangeEvents)
+    this.pendingChangeEvents = []
+  }
 
   /**
    * Registers an event listener to the `did-change` event.
@@ -403,6 +464,9 @@ export default class Minimap {
     }))
     subs.add(atom.config.observe('minimap.scrollSensitivity', opts, (scrollSensitivity) => {
       this.scrollSensitivity = scrollSensitivity
+    }))
+    subs.add(atom.config.observe('minimap.redrawDelay', opts, (redrawDelay) => {
+      this.redrawDelay = redrawDelay
     }))
     // cdprr is shorthand for configDevicePixelRatioRounding
     subs.add(atom.config.observe(
@@ -627,9 +691,11 @@ export default class Minimap {
    * @param {number} width the new width of the Minimap
    */
   setScreenHeightAndWidth (height, width) {
-    this.height = height
-    this.width = width
-    this.updateScrollTop()
+    if (this.width !== width || this.height !== height) {
+      this.height = height
+      this.width = width
+      this.updateScrollTop()
+    }
   }
 
   /**
@@ -848,7 +914,11 @@ export default class Minimap {
    */
   updateScrollTop () {
     if (this.independentMinimapScroll) {
-      this.setScrollTop(this.getScrollTopFromEditor())
+      try {
+        this.setScrollTop(this.getScrollTopFromEditor())
+      } catch (err) {
+
+      }
       this.emitter.emit('did-change-scroll-top', this)
     }
   }
@@ -888,14 +958,18 @@ export default class Minimap {
    * @access private
    */
   onMouseWheel (event) {
-    if (!this.canScroll()) { return }
+    if (this.scrollIndependentlyOnMouseWheel()) {
+      event.stopPropagation()
 
-    const {wheelDeltaY} = event
-    const previousScrollTop = this.getScrollTop()
-    const updatedScrollTop = previousScrollTop - Math.round(wheelDeltaY * this.scrollSensitivity)
+      if (!this.canScroll()) { return }
 
-    event.preventDefault()
-    this.setScrollTop(updatedScrollTop)
+      const {wheelDeltaY} = event
+      const previousScrollTop = this.getScrollTop()
+      const updatedScrollTop = previousScrollTop - Math.round(wheelDeltaY * this.scrollSensitivity)
+
+      event.preventDefault()
+      this.setScrollTop(updatedScrollTop)
+    }
   }
 
   /**
@@ -948,4 +1022,8 @@ export default class Minimap {
    */
   clearCache () { this.adapter.clearCache() }
 
+  editorDestroyed () { this.adapter.editorDestroyed() }
+
 }
+
+module.exports = Minimap.initClass()

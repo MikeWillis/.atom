@@ -1,25 +1,40 @@
-'use babel';
-
-import {CompositeDisposable} from 'atom';
+const {CompositeDisposable} = require('atom');
 
 let prevFocusedElm = null;
 
-export default class ToolBarButtonView {
+module.exports = class ToolBarButtonView {
 
-  constructor (options) {
+  constructor (options, group) {
     this.element = document.createElement('button');
     this.subscriptions = new CompositeDisposable();
 
     this.priority = options.priority;
     this.options = options;
+    this.group = group;
+    this.enabled = true;
 
     if (options.tooltip) {
-      this.element.title = options.tooltip;
+      const callback = this.options.callback;
+
+      let tooltip = {};
+      if (typeof options.tooltip === 'string') {
+        tooltip = {
+          title: options.tooltip
+        };
+      } else {
+        tooltip = options.tooltip;
+      }
+
+      if (!tooltip.hasOwnProperty('placement')) {
+        tooltip.placement = getTooltipPlacement;
+      }
+
+      if (!tooltip.hasOwnProperty('keyBindingCommand')) {
+        tooltip.keyBindingCommand = typeof callback === 'string' ? callback : null;
+      }
+
       this.subscriptions.add(
-        atom.tooltips.add(this.element, {
-          title: options.tooltip,
-          placement: getTooltipPlacement
-        })
+        atom.tooltips.add(this.element, tooltip)
       );
     }
 
@@ -27,10 +42,20 @@ export default class ToolBarButtonView {
     if (this.priority < 0) {
       classNames.push('tool-bar-item-align-end');
     }
-    if (options.iconset) {
-      classNames.push(options.iconset, `${options.iconset}-${options.icon}`);
-    } else {
-      classNames.push(`icon-${options.icon}`);
+    if (options.icon) {
+      if (options.iconset) {
+        classNames.push(options.iconset, `${options.iconset}-${options.icon}`);
+      } else {
+        classNames.push(`icon-${options.icon}`);
+      }
+    }
+
+    if (options.text) {
+      if (options.html) {
+        this.element.innerHTML = options.text;
+      } else {
+        this.element.textContent = options.text;
+      }
     }
 
     this.element.classList.add(...classNames);
@@ -48,6 +73,19 @@ export default class ToolBarButtonView {
     } else {
       this.element.classList.add('disabled');
     }
+    this.enabled = enabled;
+  }
+
+  setSelected (selected) {
+    if (selected) {
+      this.element.classList.add('selected');
+    } else {
+      this.element.classList.remove('selected');
+    }
+  }
+
+  getSelected () {
+    return this.element.classList.contains('selected');
   }
 
   destroy () {
@@ -65,11 +103,13 @@ export default class ToolBarButtonView {
 
   _onClick (e) {
     getPrevFocusedElm().focus();
-    if (!this.element.classList.contains('disabled')) {
-      executeCallback(this.options, e);
+    if (this.element && !this.element.classList.contains('disabled')) {
+      executeCallback(this, e);
     }
-    e.preventDefault();
-    e.stopPropagation();
+    if (e.preventDefault) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   }
 
   _onMouseOver (e) {
@@ -77,7 +117,7 @@ export default class ToolBarButtonView {
       prevFocusedElm = document.activeElement;
     }
   }
-}
+};
 
 function getPrevFocusedElm () {
   const workspaceView = atom.views.getView(atom.workspace);
@@ -97,14 +137,19 @@ function getTooltipPlacement () {
        : null;
 }
 
-function executeCallback ({callback, data}, e) {
-  if (typeof callback === 'object' && callback) {
+function executeCallback (buttonView, e) {
+  let {callback, data} = buttonView.options;
+  if (typeof callback === 'object' && !Array.isArray(callback) && callback) {
     callback = getCallbackModifier(callback, e);
   }
   if (typeof callback === 'string') {
     atom.commands.dispatch(getPrevFocusedElm(), callback);
+  } else if (Array.isArray(callback)) {
+    for (let i = 0; i < callback.length; i++) {
+      atom.commands.dispatch(getPrevFocusedElm(), callback[i]);
+    }
   } else if (typeof callback === 'function') {
-    callback(data, getPrevFocusedElm());
+    callback.call(buttonView, data, getPrevFocusedElm());
   }
 }
 

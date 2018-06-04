@@ -4,11 +4,57 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and
 tries to follow the [Keep a CHANGELOG](http://keepachangelog.com) convention.
 
-## [vNext](https://github.com/suda/tool-bar/compare/v1.0.1...master) - Unreleased
+## [vNext](https://github.com/suda/tool-bar/compare/v1.1.0...master) - Unreleased
 
 *   ...
 
-## [vNext](https://github.com/suda/tool-bar/compare/v1.0.0...v1.0.1) - 2016-08-07
+## [v1.1.6](https://github.com/suda/tool-bar/compare/v1.1.5...v1.1.6) - 2018-03-18
+
+* [Allow the text to be inserted as HTML](https://github.com/suda/tool-bar/pull/217) (by [@UziTech](https://github.com/UziTech))
+* Fix #227
+
+## [v1.1.6](https://github.com/suda/tool-bar/compare/v1.1.5...v1.1.6) - 2018-02-11
+* Fix #219 #221 #223 #224
+
+## [v1.1.5](https://github.com/suda/tool-bar/compare/v1.1.4...v1.1.5) - 2018-02-09
+
+* [Allow tooltip to be an object](https://github.com/suda/tool-bar/pull/216) (by [@UziTech](https://github.com/UziTech))
+* [Add support for selected buttons](https://github.com/suda/tool-bar/pull/177) (by [@gsmcmullin](https://github.com/gsmcmullin))
+* Update Atom engine version to 1.20.0
+
+## [v1.1.4](https://github.com/suda/tool-bar/compare/v1.1.3...v1.1.4) - 2018-01-09
+
+* Fixed [Touch Bar slowing down Atom when it's not supported](https://github.com/suda/tool-bar/issues/213) (by [@suda](https://github.com/suda))
+
+## [v1.1.3](https://github.com/suda/tool-bar/compare/v1.1.2...v1.1.3) - 2018-01-08
+
+* Fixed [Touch Bar flickering issue](https://github.com/suda/tool-bar/issues/212) (by [@suda](https://github.com/suda))
+
+## [v1.1.2](https://github.com/suda/tool-bar/compare/v1.1.1...v1.1.2) - 2018-01-07
+
+* Added Touch Bar support [PR #211](https://github.com/suda/tool-bar/pull/211) (by [@suda](https://github.com/suda))
+
+## [v1.1.1](https://github.com/suda/tool-bar/compare/v1.1.0...v1.1.1) - 2018-01-03
+
+* Added example for multiple callbacks [PR #199](https://github.com/suda/tool-bar/pull/199) (by [@pheraph](https://github.com/pheraph))
+* Remove the need for "use babel" [PR #207](https://github.com/suda/tool-bar/pull/207) (by [@bolinfest](https://github.com/bolinfest))
+* Updated `remark` to version 6 [PR #210](https://github.com/suda/tool-bar/pull/210) (by [@suda](https://github.com/suda))
+* Updated Material Design Icons to v1.8.36 [PR #183](https://github.com/suda/tool-bar/pull/183) (by [@PaulBrownMagic](https://github.com/PaulBrownMagic))
+* Display keybinding in the tooltip [PR #175](https://github.com/suda/tool-bar/pull/175) (by [@vjeux](https://github.com/vjeux))
+* Fix "Uncaught TypeError: Cannot read property 'classList' of null"
+
+## [v1.1.0](https://github.com/suda/tool-bar/compare/v1.0.1...v1.1.0) - 2017-03-10
+
+*   Removed API v0.1.0. [PR #153](https://github.com/suda/tool-bar/pull/153)
+    (by [@zertosh](https://github.com/zertosh))
+*   Moved menu from Packages to View. [PR #161](https://github.com/suda/tool-bar/pull/161) (by [@jerone](https://github.com/jerone))
+*   Perf improvements by debouncing `drawGutter`. [PR #164](https://github.com/suda/tool-bar/pull/164) (by [@zertosh](https://github.com/zertosh))
+*   Allow multiple commands in an array. [PR #171](https://github.com/suda/tool-bar/pull/171) (by [@UziTech](https://github.com/UziTech))
+*   Update One themes. The One themes now handle the borders/padding of panels,
+    so tool-bar doesn't have to worry about it. [PR #160](https://github.com/suda/tool-bar/pull/160)
+    (by [@simurai](https://github.com/simurai))
+
+## [v1.0.1](https://github.com/suda/tool-bar/compare/v1.0.0...v1.0.1) - 2016-08-07
 
 *   :art: Full-width is the new standard for the status-bar This restores bottom
     border for vertical tool-bars with the One theme. Closes [#157](https://github.com/suda/tool-bar/issues/157)

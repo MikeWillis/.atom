@@ -1,778 +1,1047 @@
-var __hasProp = {}.hasOwnProperty,
-	__extends = function(child, parent) {
-		for (var key in parent) {
-			if (__hasProp.call(parent, key)) child[key] = parent[key];
-		}
-
-		function ctor() {
-			this.constructor = child;
-		}
-		ctor.prototype = parent.prototype;
-		child.prototype = new ctor();
-		child.__super__ = parent.prototype;
-		return child;
-	},
-	FS = require('fs-plus'),
-	Path = require('path'),
-	events = require('events'),
-	stripJsonComments = require('strip-json-comments'),
-	FTP,
-	SFTP,
-	Directory = require('./directory'),
-	LintStream = require('jslint').LintStream,
-	chokidar = require("chokidar");
-
-module.exports = (function() {
-
-	__extends(Client, events.EventEmitter);
-
-	function Client() {
-		this.info = null;
-		this.connector = null;
-		this._current = null;
-		this._queue = [];
-
-		this.root = new Directory({
-			name: '/',
-			path: '/',
-			client: this,
-			isExpanded: true
-		});
-
-		//this.on("connected", this.watchListeners.bind(this, true));
-		//this.on("disconnected", this.watchListeners.bind(this, false));
-		this.on("connected", this.watch.addListeners.bind(this));
-		this.on("disconnected", this.watch.removeListeners.bind(this));
-	}
-
-	__extends(Progress, events.EventEmitter);
-
-	function Progress() {
-		this.progress = -1;
-		this._start = 0;
-	}
-
-	Progress.prototype.setProgress = function(progress) {
-		progress = parseFloat(progress) || -1;
-
-		if (this.progress == -1 && progress > -1)
-			this._start = new Date().getTime();
-
-		this.progress = progress;
-		this.emit('progress', this.progress);
-
-		if (this.progress == 1)
-			this.emit('done');
-	};
-
-	Progress.prototype.isDone = function() {
-		return this.progress >= 1;
-	};
-
-	Progress.prototype.getEta = function() {
-		if (this.progress == -1)
-			return Infinity;
-		var now = new Date().getTime(),
-			elapse = now - this._start,
-			remaining = elapse * 1 / this.progress;
-		//return 1 * delta / this.progress;
-		return remaining - elapse;
-	};
-
-	Client.prototype.readConfig = function(callback) {
-		var self = this;
-
-		function e(err) {
-			if (typeof callback === 'function')
-				callback.apply(self, [err]);
-		}
-
-		FS.readFile(atom.project.getDirectories()[0].resolve('.ftpconfig'), 'utf8', function(err, data) {
-			if (err)
-				return e(err);
-
-			data = stripJsonComments(data);
-			var json = null;
-			if (self.validateConfig(data)) {
-				try {
-					json = JSON.parse(data);
-
-					self.info = json;
-					self.root.name = '';
-					self.root.path = '/' + self.info.remote.replace(/^\/+/, '');
-				} catch (error) {
-					atom.notifications.addError('Could not process `.ftpconfig`', {
-						detail: error
-					});
-				}
-			}
-			if (json !== null && typeof callback === 'function') {
-				callback.apply(self, [err, json]);
-			}
-		});
-	};
-
-	Client.prototype.validateConfig = function(data) {
-		var valid = true;
-
-		var lintStream = new LintStream({
-			edition: "latest",
-			white: true
-		});
-		lintStream.write({
-			file: '.ftpconfig',
-			body: data
-		});
-		lintStream.on('data', function(chunk) {
-			var error = chunk.linted.errors.slice(0, 1);
-			if (error.length) {
-				error = error[0];
-				atom.notifications.addError('Could not parse `.ftpconfig`', {
-					detail: error.message + "\n" + chunk.linted.lines[error.line]
-				});
-
-				atom.workspace.open('.ftpconfig').then(function(editor) {
-					var decorationConfig = {
-						class: 'ftpconfig_line_error'
-					};
-					editor.getDecorations(decorationConfig).forEach(function(decoration) {
-						decoration.destroy();
-					});
-
-					var range = editor.getBuffer().clipRange([
-						[error.line, 0],
-						[error.line, Infinity]
-					]);
-					var marker = editor.markBufferRange(range, {
-						invalidate: 'inside'
-					});
-
-					decorationConfig.type = 'line';
-					editor.decorateMarker(marker, decorationConfig);
-				});
-
-				valid = false;
-			}
-		});
-
-		return valid;
-	};
-
-	Client.prototype.isConnected = function(onconnect) {
-		return this.connector && this.connector.isConnected();
-	};
-
-	Client.prototype.onceConnected = function(onconnect) {
-		var self = this;
-		if (self.connector && self.connector.isConnected()) {
-			onconnect.apply(self);
-			return true;
-		} else if (typeof onconnect === 'function') {
-			self.readConfig(function() {
-				self.connect(true);
-			});
-			self.removeListener('connected', onconnect);
-			self.once('connected', onconnect);
-			return false;
-		}
-	};
-
-	Client.prototype.connect = function(reconnect) {
-		var self = this;
-
-		//self.watchListeners(true);
-
-		if (reconnect !== true)
-			self.disconnect();
-
-		if (self.isConnected())
-			return;
-
-		if (!self.info)
-			return;
-
-		if (self.info.promptForPass === true)
-			self.promptForPass();
-		else
-			self.doConnect();
-	};
-
-	Client.prototype.doConnect = function() {
-		var self = this;
-
-		atom.notifications.addInfo("Remote FTP: Connecting...");
-
-		var info;
-		switch (self.info.protocol) {
-			case 'ftp':
-				info = {
-					host: self.info.host || '',
-					port: self.info.port || 21,
-					user: self.info.user || '',
-					password: self.info.pass || '',
-					secure: self.info.secure || '',
-					secureOptions: self.info.secureOptions || '',
-					connTimeout: self.info.timeout || 10000,
-					pasvTimeout: self.info.timeout || 10000,
-					keepalive: self.info.keepalive || 10000,
-					debug: function(str) {
-						var log = str.match(/^\[connection\] (>|<) '(.*?)(\\r\\n)?'$/);
-						if (!log) return;
-						if (log[2].match(/^PASS /))
-							log[2] = 'PASS ******';
-						self.emit('debug', log[1] + ' ' + log[2]);
-						console.debug(log[1] + ' ' + log[2]);
-					}
-				};
-				if (!FTP) FTP = require('./connectors/ftp');
-				self.connector = new FTP(self);
-				break;
-			case 'sftp':
-				info = {
-					host: self.info.host || '',
-					port: self.info.port || 21,
-					username: self.info.user || '',
-					readyTimeout: self.info.connTimeout || 10000,
-					pingInterval: self.info.keepalive || 10000
-				};
-				if (self.info.pass)
-					info.password = self.info.pass;
-
-				var pk;
-				if (self.info.privatekey && (pk = FS.readFileSync(self.info.privatekey)))
-					info.privateKey = pk;
-
-				if (self.info.passphrase)
-					info.passphrase = self.info.passphrase;
-
-				if (self.info.agent)
-					info.agent = self.info.agent;
-
-				if (self.info.agent == 'env')
-					info.agent = process.env.SSH_AUTH_SOCK;
-
-				if (self.info.hosthash)
-					info.hostHash = self.info.hosthash;
-
-				if (self.info.ignorehost)
-					info.hostVerifier = function() {
-						return true;
-					};
-
-				if (self.info.keyboardInteractive)
-					info.tryKeyboard = true;
-
-				info.debug = function(str) {
-					/*var log = str.match(/^\[connection\] (>|<) '(.*?)(\\r\\n)?'$/);
-					if (!log) return;
-					if (log[2].match(/^PASS /))
-						log[2] = 'PASS ******';
-					self.emit('debug', log[1] +' '+ log[2]);
-					console.debug(log[1] +' '+ log[2]);*/
-				};
-
-				if (!SFTP) SFTP = require('./connectors/sftp');
-				self.connector = new SFTP(self);
-				break;
-			default:
-				throw "No `protocol` found in connection credential. Please recreate .ftpconfig file from Packages -> Remote-FTP -> Create (S)FTP config file.";
-		}
-
-		self.connector.connect(info, function() {
-			if (self.root.status != 1)
-				self.root.open();
-			self.emit('connected');
-
-			atom.notifications.addSuccess("Remote FTP: Connected");
-		});
-
-		//self.connector.on('greeting', function () {
-		//	self.emit('greeting');
-		//});
-		self.connector.on('closed', function() {
-			self.disconnect();
-			self.emit('closed');
-
-			atom.notifications.addInfo("Remote FTP: Connection closed");
-		});
-		self.connector.on('ended', function() {
-			self.emit('ended');
-		});
-		self.connector.on('error', function(err) {
-			//self.emit('error', err);
-			//console.error(err);
-
-			atom.notifications.addError("Remote FTP: " + err);
-		});
-	};
-
-	Client.prototype.disconnect = function() {
-		var self = this;
-
-		if (self.connector) {
-			self.connector.disconnect();
-			delete self.connector;
-			self.connector = null;
-		}
-
-		if (self.root) {
-			self.root.status = 0;
-			self.root.destroy();
-			//self.root = null;
-		}
-
-		self.watch.removeListeners.apply(self);
-
-		self._current = null;
-		self._queue = [];
-
-		self.emit('disconnected');
-
-
-		return self;
-	};
-
-	Client.prototype.toRemote = function(local) {
-		var self = this;
-
-		return Path.join(
-			self.info.remote,
-			atom.project.relativize(local)
-		).replace(/\\/g, '/');
-	};
-
-	Client.prototype.toLocal = function(remote) {
-		var self = this;
-
-		return atom.project.getDirectories()[0].resolve(
-			'./' + remote.substr(self.info.remote.length).replace(/^\/+/, '')
-		);
-	};
-
-	Client.prototype._next = function() {
-		var self = this;
-
-		if (!self.isConnected())
-			return;
-
-		self._current = self._queue.shift();
-		if (self._current)
-			self._current[1].apply(self, [self._current[2]]);
-
-		atom.project.remoteftp.emit('queue-changed');
-	};
-
-	Client.prototype._enqueue = function(func, desc) {
-		var self = this,
-			progress = new Progress();
-
-		self._queue.push([desc, func, progress]);
-		if (self._queue.length == 1 && !self._current)
-			self._next();
-		else
-			self.emit('queue-changed');
-
-		return progress;
-	};
-
-	Client.prototype.abort = function() {
-		var self = this;
-
-		if (self.isConnected())
-			self.connector.abort(function() {
-				self._next();
-			});
-
-		return self;
-	};
-
-	Client.prototype.abortAll = function() {
-		var self = this;
-
-		self._current = null;
-		self._queue = [];
-
-		if (self.isConnected())
-			self.connector.abort();
-
-		self.emit('queue-changed');
-
-		return self;
-	};
-
-	Client.prototype.list = function(remote, recursive, callback) {
-		var self = this;
-
-		//if (self.isConnected()) {
-		self.onceConnected(function() {
-			self._enqueue(function() {
-				self.connector.list(remote, recursive, function() {
-					if (typeof callback === 'function')
-						callback.apply(null, arguments);
-					self._next();
-				});
-			}, 'Listing ' + (recursive ? 'recursively ' : '') + Path.basename(remote));
-		});
-
-		return self;
-	};
-
-	Client.prototype.download = function(remote, recursive, callback) {
-		var self = this;
-
-		//if (self.isConnected()) {
-		self.onceConnected(function() {
-			self._enqueue(function(progress) {
-				self.connector.get(remote, recursive, function() {
-					if (typeof callback === 'function')
-						callback.apply(null, arguments);
-					self._next();
-				}, function(percent) {
-					progress.setProgress(percent);
-				});
-			}, 'Downloading ' + Path.basename(remote));
-		});
-
-		return self;
-	};
-
-	Client.prototype.upload = function(local, callback) {
-		var self = this;
-		//if (self.isConnected()) {
-		self.onceConnected(function() {
-			self._enqueue(function(progress) {
-				self.connector.put(local, function() {
-					if (typeof callback === 'function')
-						callback.apply(null, arguments);
-					self._next();
-				}, function(percent) {
-					progress.setProgress(percent);
-				});
-			}, 'Uploading ' + Path.basename(local));
-		});
-
-		return self;
-	};
-
-	Client.prototype._traverseTree = function(path, callback) {
-		var list = [],
-			digg = 0;
-
-		var e = function() {
-			list.forEach(function(item) {
-				item.depth = item.name.split('/').length;
-			});
-			list.sort(function(a, b) {
-				if (a.depth == b.depth)
-					return 0;
-				return a.depth > b.depth ? 1 : -1;
-			});
-
-			if (typeof callback === 'function')
-				callback.apply(null, [list]);
-		};
-		var l = function(p) {
-			++digg;
-			FS.readdir(p, function(err, lis) {
-				if (err)
-					return e();
-
-				lis.forEach(function(name) {
-					if (name == '.' || name == '..')
-						return;
-
-					name = Path.join(p, name);
-					var stats = FS.statSync(name);
-					list.push({
-						name: name,
-						size: stats.size,
-						date: stats.mtime,
-						type: stats.isFile() ? 'f' : 'd'
-					});
-					if (!stats.isFile()) {
-						l(name);
-					}
-				});
-				if (--digg === 0)
-					return e();
-			});
-		};
-		l(path);
-	};
-
-	Client.prototype.syncRemoteLocal = function(remote, callback) {
-		var self = this;
-		if (!remote) return;
-
-		self.onceConnected(function() {
-			self._enqueue(function(progress) {
-
-				var local = self.toLocal(remote);
-
-				self.connector.list(remote, true, function(err, remotes) {
-					if (err) {
-						if (typeof callback === 'function')
-							callback.apply(null, [err]);
-						return;
-					}
-
-					self._traverseTree(local, function(locals) {
-
-						var e = function() {
-							if (typeof callback === 'function')
-								callback.apply(null);
-							self._next();
-							return;
-						};
-						var n = function() {
-							var remote = remotes.shift();
-							if (!remote) {
-								return e();
-							}
-
-							if (remote.type == 'd')
-								return n();
-
-
-							var toLocal = self.toLocal(remote.name),
-								local = null;
-
-							for (var a = 0, b = locals.length; a < b; ++a) {
-								if (locals[a].name == toLocal) {
-									local = locals[a];
-									break;
-								}
-							}
-
-							// Download only if not present on local or size differ
-							if (!local || remote.size != local.size) {
-								self.connector.get(remote.name, false, function() {
-									return n();
-								});
-							} else {
-								n();
-							}
-						};
-						n();
-					});
-				});
-
-			}, 'Sync local ' + Path.basename(remote));
-		});
-
-		return self;
-	};
-
-	Client.prototype.syncLocalRemote = function(local, callback) {
-		var self = this;
-
-		self.onceConnected(function() {
-			self._enqueue(function(progress) {
-
-				var remote = self.toRemote(local);
-				self.connector.list(remote, true, function(err, remotes) {
-					if (err) {
-						if (typeof callback === 'function')
-							callback.apply(null, [err]);
-						return;
-					}
-
-					self._traverseTree(local, function(locals) {
-
-						var e = function() {
-							if (typeof callback === 'function')
-								callback.apply(null);
-							self._next();
-							return;
-						};
-						var n = function() {
-							var local = locals.shift();
-							if (!local) {
-								return e();
-							}
-
-							if (local.type == 'd')
-								return n();
-
-							var toRemote = self.toRemote(local.name),
-								remote = null;
-
-							for (var a = 0, b = remotes.length; a < b; ++a) {
-								if (remotes[a].name == toRemote) {
-									remote = remotes[a];
-									break;
-								}
-							}
-
-							// Upload only if not present on remote or size differ
-							if (!remote || remote.size != local.size) {
-								self.connector.put(local.name, function() {
-									return n();
-								});
-							} else {
-								n();
-							}
-						};
-						n();
-					});
-				});
-
-			}, 'Sync remote ' + Path.basename(local));
-		});
-
-		return self;
-	};
-
-	Client.prototype.mkdir = function(remote, recursive, callback) {
-		var self = this;
-
-		//if (self.isConnected()) {
-		self.onceConnected(function() {
-			self._enqueue(function() {
-				self.connector.mkdir(remote, recursive, function() {
-					if (typeof callback === 'function')
-						callback.apply(null, arguments);
-					self._next();
-				});
-			}, 'Creating folder ' + Path.basename(remote));
-		});
-
-		return self;
-	};
-
-	Client.prototype.mkfile = function(remote, callback) {
-		var self = this;
-
-		//if (self.isConnected()) {
-		self.onceConnected(function() {
-			self._enqueue(function() {
-				self.connector.mkfile(remote, function() {
-					if (typeof callback === 'function')
-						callback.apply(null, arguments);
-					self._next();
-				});
-			}, 'Creating file ' + Path.basename(remote));
-		});
-
-		return self;
-	};
-
-	Client.prototype.rename = function(source, dest, callback) {
-		var self = this;
-
-		//if (self.isConnected()) {
-		self.onceConnected(function() {
-			self._enqueue(function() {
-				self.connector.rename(source, dest, function() {
-					if (typeof callback === 'function')
-						callback.apply(null, arguments);
-					self._next();
-				});
-			}, 'Renaming ' + Path.basename(source));
-		});
-
-		return self;
-	};
-
-	Client.prototype.delete = function(remote, callback) {
-		var self = this;
-
-		//if (self.isConnected()) {
-		self.onceConnected(function() {
-			self._enqueue(function() {
-				self.connector.delete(remote, function() {
-					if (typeof callback === 'function')
-						callback.apply(null, arguments);
-					self._next();
-				});
-			}, 'Deleting ' + Path.basename(remote));
-		});
-
-		return self;
-	};
-
-	Client.prototype.promptForPass = function() {
-		var self = this;
-
-		PromptPassDialog = require('./dialogs/prompt-pass-dialog');
-		var dialog = new PromptPassDialog('', true);
-		dialog.on('dialog-done', function(e, pass) {
-			self.info.pass = pass;
-			self.info.passphrase = pass;
-			dialog.close();
-			self.doConnect();
-		});
-		dialog.attach();
-	};
-
-
-	Client.prototype.watch = {
-		watcher:null,
-		files: [],
-		addListeners: function() {
-			var self = this;
-			var watchData = self.info.watch;
-			if (watchData === null) return;
-			if (typeof watchData === "string") {
-				watchData = [watchData];
-			}
-			if (!Array.isArray(watchData) || watchData.length < 1) return;
-
-			var dir = atom.project.getDirectories()[0].getRealPathSync();
-
-			var watchDataFormatted = watchData.map(function(watch){
-				return Path.resolve(dir, watch);
-			});
-
-
-			var watcher = chokidar.watch(watchDataFormatted, {
-			  ignored: /[\/\\]\./,
-			  persistent: true
-			});
-
-			watcher
-			.on("change", function(path, stats){
-				var directory = Path.dirname(path);
-				self.watch.queueUpload.apply(self, [path]);
-			});
-
-			self.files = watchDataFormatted.slice();
-
-			atom.notifications.addInfo("Remote FTP: Added watch listeners");
-			self.watcher = watcher;
-
-		},
-		removeListeners: function(fileName) {
-			var self = this;
-
-			if(self.watcher != null){
-				self.watcher.close();
-				atom.notifications.addInfo("Remote FTP: Stopped watch listeners");
-			}
-
-		},
-		queue: {},
-		queueUpload: function(fileName) {
-			var self = this;
-			var timeoutDuration = isNaN(parseInt(self.info.watchTimeout)) === true ? 500 : parseInt(self.info.watchTimeout);
-
-
-			function scheduleUpload(fileName) {
-				self.watch.queue[fileName] = setTimeout(function() {
-					self.upload(fileName, function() {});
-				}, timeoutDuration);
-			}
-
-			if (self.watch.queue[fileName] !== null) {
-				clearTimeout(self.watch.queue[fileName]);
-				self.watch.queue[fileName] = null;
-			}
-
-			scheduleUpload(fileName);
-
-		}
-
-	};
-
-	return Client;
-})();
+'use babel';
+
+import FS from 'fs-plus';
+import os from 'os';
+import { File, CompositeDisposable, Emitter, watchPath } from 'atom';
+import { $ } from 'atom-space-pen-views';
+import Path from 'path';
+import stripJsonComments from 'strip-json-comments';
+import ignore from 'ignore';
+import sshConfig from 'ssh-config';
+import { multipleHostsEnabled, getObject, hasProject, logger, traverseTree, validateConfig, resolveHome, mkdirSyncRecursive } from './helpers';
+import Directory from './directory';
+import Progress from './progress';
+import FTP from './connectors/ftp';
+import SFTP from './connectors/sftp';
+import PromptPassDialog from './dialogs/prompt-pass-dialog';
+
+const SSH2_ALGORITHMS = require('ssh2-streams').constants.ALGORITHMS;
+
+export default class Client {
+  constructor() {
+    this.subscriptions = new CompositeDisposable();
+    this.emitter = new Emitter();
+
+    const self = this;
+    self.info = null;
+    self.connector = null;
+    self.current = null;
+    self.queue = [];
+
+    self.ignoreBaseName = '.ftpignore';
+    self.ignoreFile = null;
+    self.ignoreFilter = false;
+    self.watchers = null;
+
+    self.root = new Directory({
+      name: '/',
+      path: '/',
+      client: this,
+      isExpanded: true,
+    });
+
+    self.status = 'NOT_CONNECTED'; // Options NOT_CONNECTED, CONNECTING, CONNECTED
+
+    self.watch = {
+      watcher: null,
+      files: [],
+      addListeners() {
+        let watchData = getObject({
+          keys: ['info', 'watch'],
+          obj: self,
+        });
+        if (watchData === null || watchData === false) return;
+        if (typeof watchData === 'string') watchData = [watchData];
+
+        if (!Array.isArray(watchData) || watchData.length === 0) return;
+
+        const dir = self.getProjectPath();
+
+        const watchDataFormatted = watchData.map(watch => Path.normalize(`${dir}/${watch}`));
+
+        const watchers = [];
+        const watchUniq = (watchDatum) => {
+          watchPath(watchDatum, {}, (events) => {
+            Object.keys(events).forEach((key) => {
+              const event = events[key];
+
+              if (event.action === 'modified' && !event.path.match(/(^|[/\\])\../)) {
+                self.watch.queueUpload.apply(self, [event.path]);
+
+                if (atom.config.get('Remote-FTP.notifications.enableWatchFileChange')) {
+                  atom.notifications.addInfo(`Remote FTP: Change detected in: ${event.path}`, {
+                    dismissable: false,
+                  });
+                }
+              }
+            });
+          }).then(disposable => watchers.push(disposable));
+        };
+
+        watchDataFormatted.forEach(watchUniq);
+
+        self.files = watchDataFormatted.slice();
+
+        atom.notifications.addInfo('Remote FTP: Added watch listeners.', {
+          dismissable: false,
+        });
+        self.watchers = watchers;
+      },
+      removeListeners() {
+        if (self.watchers != null && self.watchers.length > 0) {
+          self.watchers.forEach(watcher => watcher.dispose());
+
+          atom.notifications.addInfo('Remote FTP: Stopped watch listeners.', {
+            dismissable: false,
+          });
+
+          self.watchers = null;
+        }
+      },
+      queue: {},
+      queueUpload(fileName) {
+        const timeoutDuration = isNaN(parseInt(self.info.watchTimeout, 10)) === true
+          ? 500
+          : parseInt(self.info.watchTimeout, 10);
+
+
+        function scheduleUpload(file) {
+          self.watch.queue[file] = setTimeout(() => {
+            self.upload(file, () => {});
+          }, timeoutDuration);
+        }
+
+        if (self.watch.queue[fileName] !== null) {
+          clearTimeout(self.watch.queue[fileName]);
+          self.watch.queue[fileName] = null;
+        }
+
+        scheduleUpload(fileName);
+      },
+
+    };
+
+    self.watch.addListeners = self.watch.addListeners.bind(self);
+    self.watch.removeListeners = self.watch.removeListeners.bind(self);
+
+    self.onDidConnected(self.watch.addListeners);
+    self.onDidDisconnected(self.watch.removeListeners);
+
+    self.events();
+  }
+
+  onDidChangeStatus(callback) {
+    this.subscriptions.add(
+      this.emitter.on('change-status', () => {
+        callback(this.status);
+      }),
+    );
+  }
+
+  onDidConnected(callback) {
+    this.subscriptions.add(
+      this.emitter.on('connected', () => {
+        callback(this.status);
+        this.emitter.emit('change-status');
+      }),
+    );
+  }
+
+  onDidDisconnected(callback) {
+    this.subscriptions.add(
+      this.emitter.on('disconnected', () => {
+        callback(this.status);
+        this.emitter.emit('change-status');
+      }),
+    );
+  }
+
+  onDidClosed(callback) {
+    this.subscriptions.add(
+      this.emitter.on('closed', () => {
+        callback(this.status);
+      }),
+    );
+  }
+
+  onDidDebug(callback) {
+    this.subscriptions.add(
+      this.emitter.on('debug', (message) => {
+        callback(message);
+      }),
+    );
+  }
+
+  onDidQueueChanged(callback) {
+    this.subscriptions.add(
+      this.emitter.on('queue-changed', () => {
+        callback();
+      }),
+    );
+  }
+
+  events() {
+    const self = this;
+
+    this.subscriptions.add(
+      atom.config.onDidChange('Remote-FTP.dev.debugResponse', (values) => {
+        self.watchDebug(values.newValue);
+      }),
+      atom.config.onDidChange('Remote-FTP.tree.showProjectName', () => {
+        self.setProjectName();
+      }),
+    );
+  }
+
+  setProjectName() {
+    const self = this;
+
+    if (typeof self.ftpConfigPath === 'undefined') return;
+
+    const projectRoot = atom.config.get('Remote-FTP.tree.showProjectName');
+    const $rootName = $('.ftptree-view .project-root > .header span');
+
+    let rootName = '/';
+
+    if (typeof self.info[projectRoot] !== 'undefined') {
+      rootName = self.info[projectRoot];
+    }
+
+    self.root.name = rootName;
+    $rootName.text(rootName);
+  }
+
+  readConfig(callback) {
+    const self = this;
+    const error = (err) => {
+      if (typeof callback === 'function') callback.apply(self, [err]);
+    };
+    self.info = null;
+    self.ftpConfigPath = self.getConfigPath();
+
+    if (self.ftpConfigPath === false) throw new Error('Remote FTP: getConfigPath returned false, but expected a string');
+
+    FS.readFile(self.ftpConfigPath, 'utf8', (err, res) => {
+      if (err) return error(err);
+
+      const data = stripJsonComments(res);
+      let json = null;
+      if (validateConfig(data)) {
+        try {
+          json = JSON.parse(data);
+
+          self.info = json;
+          self.root.name = '';
+          if (self.info.remote) {
+            self.root.path = `/${self.info.remote.replace(/^\/+/, '')}`;
+          } else {
+            self.root.path = '/';
+          }
+
+          if (self.info.privatekey) {
+            self.info.privatekey = resolveHome(self.info.privatekey);
+          }
+
+          self.setProjectName();
+        } catch (e) {
+          atom.notifications.addError('Could not process `.ftpconfig`.', {
+            detail: e,
+            dismissable: false,
+          });
+        }
+      }
+      if (json !== null && typeof callback === 'function') {
+        const ssconfigPath = atom.config.get('Remote-FTP.connector.sshConfigPath');
+
+        if (ssconfigPath && self.info.protocol === 'sftp') {
+          const configPath = Path.normalize(ssconfigPath.replace('~', os.homedir()));
+
+          FS.readFile(configPath, 'utf8', (fileErr, conf) => {
+            if (fileErr) return error(fileErr);
+
+            const config = sshConfig.parse(conf);
+
+            const section = config.find({
+              Host: self.info.host,
+            });
+
+            if (section !== null) {
+              const mapping = new Map([
+                ['HostName', 'host'],
+                ['Port', 'port'],
+                ['User', 'user'],
+                ['IdentityFile', 'privatekey'],
+                ['ServerAliveInterval', 'keepalive'],
+                ['ConnectTimeout', 'connTimeout'],
+              ]);
+
+              section.config.forEach((line) => {
+                self.info[mapping.get(line.param)] = line.value;
+              });
+            }
+
+            return callback.apply(self, [err, self.info]);
+          });
+        } else {
+          callback.apply(self, [err, json]);
+        }
+      }
+
+      return true;
+    });
+  }
+
+  getFilePath(relativePath) {
+    const self = this;
+    const projectPath = self.getProjectPath();
+    if (projectPath === false) return false;
+    return Path.resolve(projectPath, relativePath);
+  }
+
+  getProjectPath() {
+    const self = this;
+    let projectPath = null;
+
+    if (multipleHostsEnabled() === true) {
+      const $selectedDir = $('.tree-view .selected');
+      const $currentProject = $selectedDir.hasClass('project-root') ? $selectedDir : $selectedDir.closest('.project-root');
+      projectPath = $currentProject.find('> .header span.name').data('path');
+    } else {
+      const firstDirectory = atom.project.getDirectories()[0];
+      if (firstDirectory != null) projectPath = firstDirectory.path;
+    }
+
+    if (projectPath != null) {
+      self.projectPath = projectPath;
+      return projectPath;
+    }
+    atom.notifications.addError('Remote FTP: Could not get project path.', {
+      dismissable: false, // Want user to report error so don't let them close it
+      detail: `Please report this error if it occurs. Multiple Hosts is ${multipleHostsEnabled()}.`,
+    });
+    return false;
+  }
+
+  getConfigPath() {
+    if (!hasProject) return false;
+
+    return this.getFilePath('./.ftpconfig');
+  }
+
+  updateIgnore() {
+    const self = this;
+
+    if (!self.ignoreFile) {
+      self.ignorePath = self.getFilePath(self.ignoreBaseName);
+      self.ignoreFile = new File(self.ignorePath);
+    }
+
+    if (!self.ignoreFile.existsSync()) {
+      self.ignoreFilter = false;
+      return false;
+    }
+
+    if (self.ignoreFile.getBaseName() === self.ignoreBaseName) {
+      self.ignoreFilter = ignore().add(self.ignoreFile.readSync(true));
+      return true;
+    }
+
+    return false;
+  }
+
+  checkIgnore(local) {
+    const self = this;
+    let haseIgnore = true;
+
+    if (!self.ignoreFilter) {
+      haseIgnore = self.updateIgnore();
+    }
+
+    if (haseIgnore && self.ignoreFilter && self.ignoreFilter.ignores(local)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  isConnected() {
+    const self = this;
+    return self.connector && self.connector.isConnected();
+  }
+
+  onceConnected(onconnect) {
+    const self = this;
+    if (self.connector && self.connector.isConnected()) {
+      onconnect.apply(self);
+      return true;
+    } else if (typeof onconnect === 'function') {
+      if (self.status === 'NOT_CONNECTED') {
+        self.status = 'CONNECTING';
+        self.readConfig((err) => {
+          if (err !== null) {
+            self.status = 'NOT_CONNECTED';
+            // NOTE: Remove notification as it will just say there
+            // is no ftpconfig if none in directory all the time
+            // atom.notifications.addError("Remote FTP: " + err);
+            return;
+          }
+          self.connect(true);
+        });
+      }
+
+      self.emitter.once('connected', onconnect);
+      return false;
+    }
+    console.warn(`Remote-FTP: Not connected and typeof onconnect is ${typeof onconnect}`);
+    return false;
+  }
+
+  connect(reconnect) {
+    if (reconnect !== true) this.disconnect();
+    if (this.isConnected()) return;
+    if (!this.info) return;
+    if (this.info.promptForPass === true) {
+      this.promptForPass();
+    } else if (this.info.keyboardInteractive === true) {
+      this.promptForKeyboardInteractive();
+    } else if (this.info.keyboardInteractiveForPass === true) {
+      this.info.verifyCode = this.info.pass;
+      this.doConnect();
+    } else {
+      this.doConnect();
+    }
+  }
+
+  doConnect() {
+    const self = this;
+
+    atom.notifications.addInfo('Remote FTP: Connecting...', {
+      dismissable: false,
+    });
+
+    let info;
+    switch (self.info.protocol) {
+      case 'ftp': {
+        info = {
+          host: self.info.host || '',
+          port: self.info.port || 21,
+          user: self.info.user || '',
+          password: self.info.pass || '',
+          secure: self.info.secure || '',
+          secureOptions: self.info.secureOptions || '',
+          connTimeout: self.info.timeout || 10000,
+          pasvTimeout: self.info.timeout || 10000,
+          keepalive: (self.info.keepalive === undefined ? 10000 : self.info.keepalive), // long version, because 0 is a valid value
+          debug(str) {
+            const log = str.match(/^\[connection\] (>|<) '(.*?)(\\r\\n)?'$/);
+            if (!log) return;
+            if (log[2].match(/^PASS /)) log[2] = 'PASS ******';
+            self.emitter.emit('debug', `${log[1]} ${log[2]}`);
+          },
+        };
+        self.connector = new FTP(self);
+        break;
+      }
+
+      case 'sftp': {
+        info = {
+          host: self.info.host || '',
+          port: self.info.port || 21,
+          username: self.info.user || '',
+          readyTimeout: self.info.connTimeout || 10000,
+          keepaliveInterval: self.info.keepalive || 10000,
+          verifyCode: self.info.verifyCode || '',
+        };
+
+        if (self.info.pass) info.password = self.info.pass;
+
+        if (self.info.privatekey) {
+          self.info.privatekey = resolveHome(self.info.privatekey);
+
+          try {
+            const pk = FS.readFileSync(self.info.privatekey);
+            info.privateKey = pk;
+          } catch (err) {
+            atom.notifications.addError('Remote FTP: Could not read privateKey file', {
+              detail: err,
+              dismissable: true,
+            });
+          }
+        }
+
+        if (self.info.passphrase) info.passphrase = self.info.passphrase;
+
+        if (self.info.agent) info.agent = self.info.agent;
+
+        if (self.info.agent === 'env') info.agent = process.env.SSH_AUTH_SOCK;
+
+        if (self.info.hosthash) info.hostHash = self.info.hosthash;
+
+        if (self.info.ignorehost) {
+          // NOTE: hostVerifier doesn't run at all if it's not a function.
+          // Allows you to skip hostHash option in ssh2 0.5+
+          info.hostVerifier = false;
+        }
+
+        info.algorithms = {
+          kex: SSH2_ALGORITHMS.SUPPORTED_KEX,
+          cipher: SSH2_ALGORITHMS.SUPPORTED_CIPHER,
+          serverHostKey: SSH2_ALGORITHMS.SUPPORTED_SERVER_HOST_KEY,
+          hmac: SSH2_ALGORITHMS.SUPPORTED_HMAC,
+          compress: SSH2_ALGORITHMS.SUPPORTED_COMPRESS,
+        };
+
+        info.filePermissions = self.info.filePermissions;
+        info.remoteCommand = self.info.remoteCommand;
+        info.remoteShell = self.info.remoteShell;
+
+        if (self.info.keyboardInteractive) info.tryKeyboard = true;
+        if (self.info.keyboardInteractiveForPass) info.tryKeyboard = true;
+
+        self.connector = new SFTP(self);
+        break;
+      }
+
+      default:
+        throw new Error('No `protocol` found in connection credential. Please recreate .ftpconfig file from Packages -> Remote-FTP -> Create (S)FTP config file.');
+    }
+
+    self.connector.connect(info, () => {
+      if (self.root.status !== 1) self.root.open();
+      self.status = 'CONNECTED';
+      self.emitter.emit('connected');
+
+      atom.notifications.addSuccess('Remote FTP: Connected', {
+        dismissable: false,
+      });
+    });
+
+    self.connector.on('closed', (action) => {
+      if (self.status === 'NOT_CONNECTED') return;
+
+      self.status = 'NOT_CONNECTED';
+      self.emitter.emit('closed');
+
+      atom.notifications.addInfo('Remote FTP: Connection closed', {
+        dismissable: false,
+      });
+
+      self.disconnect(() => {
+        if (action === 'RECONNECT') self.connect(true);
+      });
+    });
+
+    self.connector.on('ended', () => {
+      self.emitter.emit('ended');
+    });
+
+    self.connector.on('error', (err, code) => {
+      if (code === 421 || code === 'ECONNRESET') return;
+      atom.notifications.addError('Remote FTP: Connection failed', {
+        detail: err,
+        dismissable: false,
+      });
+    });
+
+    self.watchDebug(atom.config.get('Remote-FTP.dev.debugResponse'));
+  }
+
+  watchDebug(isWatching) {
+    this.emitter.off('debug', logger);
+
+    if (isWatching) {
+      this.emitter.on('debug', logger);
+    } else {
+      this.emitter.off('debug', logger);
+    }
+  }
+
+  disconnect(cb) {
+    const self = this;
+
+    if (self.connector) {
+      self.connector.disconnect();
+      delete self.connector;
+      self.connector = null;
+    }
+
+    if (self.root) {
+      self.root.status = 0;
+      self.root.destroy();
+    }
+
+    self.watch.removeListeners.apply(self);
+
+    self.current = null;
+    self.queue = [];
+
+    self.status = 'NOT_CONNECTED';
+    self.emitter.emit('disconnected');
+
+    if (typeof cb === 'function') cb();
+
+    return self;
+  }
+
+  toRemote(local) {
+    const self = this;
+
+    return Path.join(
+      self.info.remote,
+      atom.project.relativize(local),
+    ).replace(/\\/g, '/');
+  }
+
+  toLocal(remote) {
+    const self = this;
+    const projectPath = self.getProjectPath();
+    const remoteLength = self.info.remote.length;
+
+    if (projectPath === false) return false;
+    if (typeof remote !== 'string') {
+      throw new Error(`Remote FTP: remote must be a string, was passed ${typeof remote}`);
+    }
+
+    let path = null;
+    if (remoteLength > 1) {
+      path = `./${remote.substr(self.info.remote.length)}`;
+    } else {
+      path = `./${remote}`;
+    }
+
+    return Path.resolve(projectPath, `./${path.replace(/^\/+/, '')}`);
+  }
+
+  _next() {
+    const self = this;
+
+    if (!self.isConnected()) return;
+
+    self.current = self.queue.shift();
+
+    if (self.current) self.current[1].apply(self, [self.current[2]]);
+
+    atom.project.remoteftp.emitter.emit('queue-changed');
+  }
+
+  _enqueue(func, desc) {
+    const self = this;
+    const progress = new Progress();
+
+    self.queue.push([desc, func, progress]);
+    if (self.queue.length === 1 && !self.current) self._next();
+
+    else self.emitter.emit('queue-changed');
+
+    return progress;
+  }
+
+  abort() {
+    const self = this;
+
+    if (self.isConnected()) {
+      self.connector.abort(() => {
+        self._next();
+      });
+    }
+
+    return self;
+  }
+
+  abortAll() {
+    const self = this;
+
+    self.current = null;
+    self.queue = [];
+
+    if (self.isConnected()) {
+      self.connector.abort();
+    }
+
+    self.emitter.emit('queue-changed');
+
+    return self;
+  }
+
+  list(remote, recursive, callback) {
+    const self = this;
+    self.onceConnected(() => {
+      self._enqueue(() => {
+        self.connector.list(remote, recursive, (...args) => {
+          if (typeof callback === 'function') callback(...args);
+          self._next();
+        });
+      }, `Listing ${recursive ? 'recursively ' : ''}${Path.basename(remote)}`);
+    });
+
+    return self;
+  }
+
+  download(remote, recursive, callback) {
+    const self = this;
+
+    self.checkIgnore(remote);
+    if (self.ignoreFilter && self.ignoreFilter.ignores(remote)) {
+      self._next();
+      return;
+    }
+
+    self.onceConnected(() => {
+      self._enqueue((progress) => {
+        self.connector.get(remote, recursive, (...args) => {
+          if (typeof callback === 'function') callback(...args);
+          self._next();
+        }, (percent) => {
+          progress.setProgress(percent);
+        });
+      }, `Downloading ${Path.basename(remote)}`);
+    });
+  }
+
+  upload(local, callback) {
+    const self = this;
+
+    self.checkIgnore(local);
+    if (self.ignoreFilter && self.ignoreFilter.ignores(local)) {
+      self._next();
+      return;
+    }
+
+    self.onceConnected(() => {
+      self._enqueue((progress) => {
+        self.connector.put(local, (...args) => {
+          if (typeof callback === 'function') callback(...args);
+          self._next();
+        }, (percent) => {
+          progress.setProgress(percent);
+        });
+      }, `Uploading ${Path.basename(local)}`);
+    });
+  }
+
+  syncRemoteFileToLocal(remote, callback) {
+    const self = this;
+
+    // Check ignores
+    self.checkIgnore(remote);
+    if (self.ignoreFilter && self.ignoreFilter.ignores(remote)) {
+      self._next();
+      return self;
+    }
+
+    // verify active connection
+    if (self.status === 'CONNECTED') {
+      self._enqueue(() => {
+        self.connector.get(remote, false, (err) => {
+          if (err) {
+            if (typeof callback === 'function') callback.apply(null, [err]);
+            return;
+          }
+          self._next();
+        });
+      }, `Sync ${Path.basename(remote)}`);
+    } else {
+      atom.notifications.addError('Remote FTP: Not connected!', {
+        dismissable: true,
+      });
+    }
+    return self;
+  }
+
+  syncRemoteDirectoryToLocal(remote, isFile, callback) {
+    // TODO: Tidy up this function. Does ( probably ) not need to list from the connector
+    // if isFile === true. Will need to check to see if that doesn't break anything before
+    // implementing. In the meantime current solution should work for #453
+    //
+    // TODO: This method only seems to be referenced by the context menu command so gracefully
+    // removing list without breaking this method should be do-able. 'isFile' is always sending
+    // false at the moment inside commands.js
+    const self = this;
+
+    if (!remote) return;
+
+    // Check ignores
+    self.checkIgnore(remote);
+    if (self.ignoreFilter && self.ignoreFilter.ignores(remote)) {
+      self._next();
+      return;
+    }
+
+    self._enqueue(() => {
+      const local = self.toLocal(remote);
+
+      self.connector.list(remote, true, (err, remotes) => {
+        if (err) {
+          if (typeof callback === 'function') callback.apply(null, [err]);
+
+          return;
+        }
+
+        // Create folder if no exists in local
+        mkdirSyncRecursive(local);
+
+        // remove ignored remotes
+        self.checkIgnore(remote);
+        if (self.ignoreFilter) {
+          for (let i = remotes.length - 1; i >= 0; i--) {
+            if (self.ignoreFilter.ignores(remotes[i].name)) {
+              remotes.splice(i, 1); // remove from list
+            }
+          }
+        }
+
+        traverseTree(local, (locals) => {
+          const error = () => {
+            if (typeof callback === 'function') callback.apply(null);
+            self._next();
+          };
+
+          const n = () => {
+            const remoteOne = remotes.shift();
+            let loc;
+
+            if (!remoteOne) return error();
+
+            const toLocal = self.toLocal(remoteOne.name);
+            loc = null;
+
+            for (let a = 0, b = locals.length; a < b; ++a) {
+              if (locals[a].name === toLocal) {
+                loc = locals[a];
+                break;
+              }
+            }
+
+            // Download only if not present on local or size differ
+            if (!loc || remoteOne.size !== loc.size) {
+              self.connector.get(remoteOne.name, true, () => n());
+            } else {
+              n();
+            }
+
+            return true;
+          };
+
+          if (remotes.length === 0) {
+            self.connector.get(remote, false, () => n());
+            return;
+          }
+          n();
+        });
+      }, isFile);
+      // NOTE: Added isFile to end of call to prevent breaking any functions
+      // that already use list command. Is file is used only for ftp connector
+      // as it will list a file as a file of itself unlinke with sftp which
+      // will throw an error.
+    }, `Sync ${Path.basename(remote)}`);
+  }
+
+  syncLocalFileToRemote(local, callback) {
+    const self = this;
+
+    // Check ignores
+    self.checkIgnore(local);
+    if (self.ignoreFilter && self.ignoreFilter.ignores(local)) {
+      self._next();
+      return;
+    }
+
+    // verify active connection
+    if (self.status === 'CONNECTED') {
+      // progress
+      self._enqueue(() => {
+        self.connector.put(local, (err) => {
+          if (err) {
+            if (typeof callback === 'function') callback.apply(null, [err]);
+            return;
+          }
+          self._next();
+        });
+      }, `Sync: ${Path.basename(local)}`);
+    } else {
+      atom.notifications.addError('Remote FTP: Not connected!', {
+        dismissable: true,
+      });
+    }
+  }
+
+  syncLocalDirectoryToRemote(local, callback) {
+    const self = this;
+
+    // Check ignores
+    self.checkIgnore(local);
+    if (self.ignoreFilter && self.ignoreFilter.ignores(local)) {
+      self._next();
+      return;
+    }
+
+    // verify active connection
+    if (self.status === 'CONNECTED') {
+      self._enqueue(() => {
+        const remote = self.toRemote(local);
+
+        self.connector.list(remote, true, (err, remotes) => {
+          if (err) {
+            if (typeof callback === 'function') callback.apply(null, [err]);
+            return;
+          }
+
+          // remove ignored remotes
+          self.checkIgnore(remote);
+          if (self.ignoreFilter) {
+            for (let i = remotes.length - 1; i >= 0; i--) {
+              if (self.ignoreFilter.ignores(remotes[i].name)) {
+                remotes.splice(i, 1); // remove from list
+              }
+            }
+          }
+
+          traverseTree(local, (locals) => {
+            const error = () => {
+              if (typeof callback === 'function') callback.apply(null);
+              self._next();
+            };
+
+            // remove ignored locals
+            self.checkIgnore(local);
+            if (self.ignoreFilter) {
+              for (let i = locals.length - 1; i >= 0; i--) {
+                if (self.ignoreFilter.ignores(locals[i].name)) {
+                  locals.splice(i, 1); // remove from list
+                }
+              }
+            }
+
+            const n = () => {
+              const nLocal = locals.shift();
+              let nRemote;
+
+              if (!nLocal) {
+                return error();
+              }
+
+              const toRemote = self.toRemote(nLocal.name);
+              nRemote = null;
+
+              for (let a = 0, b = remotes.length; a < b; ++a) {
+                if (remotes[a].name === toRemote) {
+                  nRemote = remotes[a];
+                  break;
+                }
+              }
+
+              // NOTE: Upload only if not present on remote or size differ
+              if (!nRemote || remote.size !== nLocal.size) {
+                self.connector.put(nLocal.name, () => n());
+              } else {
+                n();
+              }
+
+              return true;
+            };
+
+            n();
+          });
+        });
+      }, `Sync ${Path.basename(local)}`);
+    } else {
+      atom.notifications.addError('Remote FTP: Not connected!', {
+        dismissable: true,
+      });
+    }
+  }
+
+  mkdir(remote, recursive, callback) {
+    const self = this;
+    self.onceConnected(() => {
+      self._enqueue(() => {
+        self.connector.mkdir(remote, recursive, (...args) => {
+          if (typeof callback === 'function') callback(...args);
+          self._next();
+        });
+      }, `Creating folder ${Path.basename(remote)}`);
+    });
+
+    return self;
+  }
+
+  mkfile(remote, callback) {
+    const self = this;
+    self.onceConnected(() => {
+      self._enqueue(() => {
+        self.connector.mkfile(remote, (...args) => {
+          if (typeof callback === 'function') callback(...args);
+          self._next();
+        });
+      }, `Creating file ${Path.basename(remote)}`);
+    });
+
+    return self;
+  }
+
+  rename(source, dest, callback) {
+    const self = this;
+    self.onceConnected(() => {
+      self._enqueue(() => {
+        self.connector.rename(source, dest, (err) => {
+          if (typeof callback === 'function') callback.apply(null, [err]);
+          self._next();
+        });
+      }, `Renaming ${Path.basename(source)}`);
+    });
+    return self;
+  }
+
+  delete(remote, callback) {
+    const self = this;
+    self.onceConnected(() => {
+      self._enqueue(() => {
+        self.connector.delete(remote, (...args) => {
+          if (typeof callback === 'function') callback(...args);
+          self._next();
+        });
+      }, `Deleting ${Path.basename(remote)}`);
+    });
+
+    return self;
+  }
+
+  site(command, callback) {
+    this.onceConnected(() => {
+      this.connector.site(command, (...args) => {
+        if (typeof callback === 'function') callback(args);
+      });
+    });
+  }
+
+  promptForPass() {
+    const self = this;
+    const dialog = new PromptPassDialog('', true);
+    dialog.on('dialog-done', (e, pass) => {
+      self.info.pass = pass;
+      self.info.passphrase = pass;
+      dialog.close();
+      self.doConnect();
+    });
+    dialog.attach();
+  }
+
+  promptForKeyboardInteractive() {
+    const self = this;
+    const dialog = new PromptPassDialog(true);
+
+    dialog.on('dialog-done', (e, pass) => {
+      self.info.verifyCode = pass;
+      dialog.close();
+      self.doConnect();
+    });
+
+    dialog.attach();
+  }
+
+  dispose() {
+    this.subscriptions.dispose();
+    this.emitter.dispose();
+    this.watch.removeListeners();
+  }
+}

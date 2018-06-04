@@ -1,9 +1,15 @@
 "*":
   "Remote-FTP":
-    autoUploadOnSave: "never"
+    connector:
+      autoUploadOnSave: "never"
+    notifications:
+      enableTransfer: true
+      enableWatchFileChange: true
   "atom-beautify":
     general:
       _analyticsUserId: "5246c0c3-a2dc-4b16-a60d-15048682f57f"
+    js:
+      indent_size: 3
   "autoclose-html":
     forceInline: [
       "*"
@@ -12,47 +18,71 @@
   "autocomplete-plus":
     backspaceTriggersAutocomplete: true
   core:
+    customFileTypes:
+      "source.json": [
+        "ftpconfig"
+      ]
     disabledPackages: [
-      "tool-bar-shortcuts"
-      "tool-bar-atom"
-      "tool-bar-almighty"
-      "block-comment"
-      "php-integrator-autocomplete-plus"
+      "linter-csslint"
+      "linter-ui-default"
+      "linter-php"
+      "linter-jshint"
+      "linter-htmlhint"
+      "linter"
+    ]
+    ignoredNames: [
       "php-integrator-base"
-      "emmet"
-      "react"
+      "linter"
     ]
     openEmptyEditorOnStart: false
+    telemetryConsent: "limited"
     themes: [
       "one-light-ui"
       "one-light-syntax"
     ]
+    uriHandlerRegistration: "always"
   editor:
-    fontSize: 13
+    autoIndentOnPaste: false
     preferredLineLength: 180
+    scrollPastEnd: true
     tabLength: 3
   "exception-reporting":
     userId: "440e2cab-8a62-95d1-86c2-6ee7abef895d"
   "git-clone":
     target_directory: "/My Projects/GithubProjects"
+  "grammar-token-limit":
+    maxTokensPerLine: 500
   "language-babel":
     autoIndentJSX: true
+  linter: {}
+  "linter-htmlhint": {}
+  "linter-php":
+    executablePath: "/wamp64/bin/php/php5.6.16/php"
+  "linter-ui-default":
+    panelHeight: 163
   minimap:
     plugins:
       "minimap-autohide": true
       "minimap-autohideDecorationsZIndex": 0
   "one-light-ui":
-    layoutMode: "Compact"
+    tabSizing: "Minimum"
   "php-integrator-autocomplete-plus":
     automaticallyAddUseStatements: false
     disableBuiltinAutocompletion: false
   "php-integrator-base": {}
+  "project-manager":
+    showPath: false
+    sortBy: "title"
+  tabs:
+    addNewTabsAtEnd: true
   "tool-bar":
     iconSize: "16px"
   "tree-view":
     showOnRightSide: true
   welcome:
     showOnStartup: false
+  whitespace:
+    ensureSingleTrailingNewline: false
 ".babel.regexp.source":
   editor:
     preferredLineLength: 180

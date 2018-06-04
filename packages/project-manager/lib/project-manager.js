@@ -1,7 +1,7 @@
 'use babel';
 
 import { autorun } from 'mobx';
-import { CompositeDisposable } from 'atom';
+import { CompositeDisposable, Disposable } from 'atom';
 import manager from './Manager';
 import { SAVE_URI, EDIT_URI } from './views/view-uri';
 
@@ -19,7 +19,7 @@ export function activate() {
   disposables = new CompositeDisposable();
 
   disposables.add(atom.workspace.addOpener((uri) => {
-    if (uri === EDIT_URI) {
+    if (uri === EDIT_URI || uri === SAVE_URI) {
       return editComponent();
     }
 
@@ -49,6 +49,9 @@ export function activate() {
     'project-manager:edit-project': () => {
       atom.workspace.open(EDIT_URI);
     },
+    'project-manager:update-projects': () => {
+      manager.fetchProjects();
+    },
   }));
 }
 
@@ -59,13 +62,21 @@ export function deactivate() {
 export function provideProjects() {
   return {
     getProjects: (callback) => {
-      autorun(() => {
+      const disposer = autorun(() => {
         callback(manager.projects);
+      });
+
+      return new Disposable(() => {
+        disposer();
       });
     },
     getProject: (callback) => {
-      autorun(() => {
+      const disposer = autorun(() => {
         callback(manager.activeProject);
+      });
+
+      return new Disposable(() => {
+        disposer();
       });
     },
     saveProject: (project) => {

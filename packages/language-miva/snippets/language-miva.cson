@@ -1,0 +1,428 @@
+".text.html.mvt:not(.source.mvt:not(.string))":
+  "Tag - Assign":
+    prefix: "mvt:assign"
+    body: '''
+      
+      <mvt:assign name="${1:g.variable}" value="${2:l.value}" />
+      
+    '''
+  Customfield:
+    prefix: "mvt:write_product_id"
+    body: '''
+      
+      <mvt:item name="customfields" param="Write_Product_ID( ${1:g.product:id}, '${2:custom_field_code}', ${3:'value'} )" />
+      
+    '''
+  Debug:
+    prefix: "mvt:var_dump"
+    body: '''
+      
+      <mvt:assign name="g.var" value="miva_array_serialize(${1:array})" />
+      <!-- @@ &mvt:global:var; -->
+      
+    '''
+  "Tag - Call":
+    prefix: "mvt:call"
+    body: '''
+      
+      <mvt:call action="$1" method="$2">
+      	${3:<mvt:eval expr="s.callvalue" />}
+      </mvt:call>
+      <!-- @@ &mvt:global:MvCALL_Error; -->
+      
+    '''
+  "Tag - CallContinue":
+    prefix: "mvt:callcontinue"
+    body: '''
+      
+      <mvt:callcontinue />
+      
+    '''
+  "Tag - CallStop":
+    prefix: "mvt:callstop"
+    body: '''
+      
+      <mvt:callstop />
+      
+    '''
+  "Tag - Comment":
+    prefix: "mvt:comment"
+    body: '''
+      
+      <mvt:comment>${1}</mvt:comment>
+      
+    '''
+  Other:
+    prefix: "mvt:glosub"
+    body: '''
+      
+      <mvt:assign name="g.new_string" value="glosub(${1:g.string}, ${2:'Miva Merchant'} , ${3:'Miva'})" />
+      
+    '''
+  "Tag - Do":
+    prefix: "mvt:do"
+    body: '''
+      
+      <mvt:do file="$4" ${2:name="${3:l.success}"} value="$1" />
+      
+    '''
+  "Tag - Else":
+    prefix: "mvt:else"
+    body: '''
+      
+      <mvt:if expr="${1}">
+      	${2}
+      <mvt:else>
+      	${0}
+      </mvt:if>
+      
+    '''
+  "Tag - ElseIf":
+    prefix: "mvt:elseif"
+    body: '''
+      
+      <mvt:if expr="${1}">
+      	${2}
+      <mvt:elseif expr="${3}">
+      	${0}
+      </mvt:if>
+      
+    '''
+  "Tag - Eval":
+    prefix: "mvt:eval"
+    body: '''
+      
+      <mvt:eval expr="${1:g.value}" />
+      
+    '''
+  "Tag - Exit":
+    prefix: "mvt:exit"
+    body: '''
+      
+      <mvt:exit />
+      
+    '''
+  "Tag - Foreach":
+    prefix: "mvt:foreach"
+    body: '''
+      
+      <mvt:foreach iterator="${1}" array="${2}">
+      	${0}
+      </mvt:foreach>
+      
+    '''
+  "Tag - ForeachContinue":
+    prefix: "mvt:foreachcontinue"
+    body: '''
+      
+      <mvt:foreachcontinue />
+      
+    '''
+  "Tag - ForeachStop":
+    prefix: "mvt:foreachstop"
+    body: '''
+      
+      <mvt:foreachstop />
+      
+    '''
+  "Tag - If":
+    prefix: "mvt:if"
+    body: '''
+      
+      <mvt:if expr="${1}">
+      	${0}
+      </mvt:if>
+      
+    '''
+  "Tag - Item":
+    prefix: "mvt:item"
+    body: '''
+      
+      <mvt:item name="${1}" ${2:param="${3}"} />
+      
+    '''
+  "Tag - Miva":
+    prefix: "mvt:miva"
+    body: '''
+      
+      <mvt:miva output="${1:on}" compresswhitespace="${2:on}" />
+      
+    '''
+  "Tag - While":
+    prefix: "mvt:while"
+    body: '''
+      
+      <mvt:while expr="${1}">
+      	${0}
+      </mvt:while>
+      
+    '''
+  "Tag - WhileContinue":
+    prefix: "mvt:whilecontinue"
+    body: '''
+      
+      <mvt:whilecontinue />
+      
+    '''
+  "Tag - WhileStop":
+    prefix: "mvt:whilestop"
+    body: '''
+      
+      <mvt:whilestop />
+      
+    '''
+  Toolkit:
+    prefix: "tk-weight"
+    body: '''
+      
+      <mvt:item name="toolkit" param="weight|${0:totalweight}" />
+      
+    '''
+".text.mv:not(.source.mv:not(.string))":
+  "Tag - Miva":
+    prefix: "MIVA"
+    body: '''
+      
+      <MIVA STANDARDOUTPUTLEVEL = "${1:html, text, compresswhitespace}"
+      	  ${2:ERROROUTPUTLEVEL = "${3:runtime | null string}${3/(r$)|.*/?1:untime/}"}
+      	  ${4:ERRORMESSAGE = "${5:[string] literal}"}
+      	  ${6:MvTAGNAME_ERROR = "${7:fatal | nonfatal, display | nodisplay}${7/(f$)|(non$)|(nod$)|.*/?1:atal:?2:fatal, display:?3:isplay/}"}>
+      
+    '''
+  "Tag - Add":
+    prefix: "MvADD"
+    body: '''
+      
+      <MvADD NAME = "${1:\\{ ${2:expression | [string] literal} \\}}" VIEW = "${3:\\{ ${4:expression | [string] literal} \\}}">
+      
+    '''
+  "Tag - Assembly":
+    prefix: "MvASSEMBLY"
+    body: '''
+      
+      <MvASSEMBLY>
+      	${2:<MvCOMMENT>
+      	| ** New in 5.18 **
+      	| MvASSEMBLY allows MivaScript assembly code to be interleaved with traditional MivaScript.
+      	| The content of the MvASSEMBLY tag is passed unmodified to the MivaScript assembler.
+      	</MvCOMMENT>}
+      	$1
+      </MvASSEMBLY>
+      
+    '''
+  "Tag - Assign (Verbose)":
+    prefix: "MvASSIGN--v"
+    body: '''
+      
+      <MvASSIGN NAME = "${1:\\{ ${2:expression | variable-name} \\}}"
+      		  VALUE = "${3:\\{ ${4:expression | [mixed] literal} \\}}"
+      		  ${5:INDEX = "${6:\\{ ${7:expression | [numeric] literal} \\}}"}
+      		  ${8:MEMBER = "${9:\\{ ${10:expression | [string] literal} \\}}"}>
+      
+    '''
+  "Tag - Assign":
+    prefix: "MvASSIGN"
+    body: '''
+      
+      <MvASSIGN NAME = "$1" VALUE = "${3:\\{ ${4:expression | [mixed] literal} \\}}">
+      
+    '''
+  "Tag - Assign Array":
+    prefix: "MvASSIGNARRAY"
+    body: '''
+      
+      <MvASSIGNARRAY NAME = "${1:\\{ ${2:expression | [string] literal} \\}}" VALUE = "${3:\\{ ${4:expression | [mixed] literal} \\}}">
+      	${5:<MvDIMENSION INDEX = "${6:[numeric] literal}">}
+      	${7:<MvMEMBER NAME = "${8:[string] literal}">}
+      </MvASSIGNARRAY>
+      
+    '''
+  "Tag - Asynchronous":
+    prefix: "MvASYNCHRONOUS"
+    body: '''
+      
+      <MvASYNCHRONOUS>
+      	${1:<MvCOMMENT>
+      	| Code within a <MvASYNCHRONOUS> and </MvASYNCHRONOUS> block will start to execute in a separate asynchronous task, and the task will exit when the </MvASYNCHRONOUS> block is reached.
+      	| All output, even via <MvEVAL>, is discarded from the asynchronous task.
+      	</MvCOMMENT>}
+      	$2
+      </MvASYNCHRONOUS>
+      
+    '''
+  "Tag - Call (Verbose)":
+    prefix: "MvCALL--v"
+    body: '''
+      
+      <MvCALL ACTION = "${1:\\{ ${2:expression | [string] literal} \\}}"
+      		METHOD = "${3:get|post|head|xml|raw|options|put|delete|trace|connect|patch|link|unlink}${3/(g$)|(po$)|(h$)|(x$)|(r$)|(o$)|(pu$)|(d$)|(t$)|(c$)|(pa$)|(l$)|(u$)|.*/?1:et:?2:st:?3:ead:?4:ml:?5:aw:?6:ptions:?7:t:?8:elete:?9:race:?10:onnect:?11:tch:?12:ink:?13:nlink/}"
+      		${4:CONTENT-TYPE = "${5:\\{ ${6:expression | [string] literal} \\}}"}
+      		${7:FIELDS = "${8:\\{ ${9:expression | variable list} \\}}"}
+      		${10:CERTFILE = "${11:\\{ ${12:expression | [string] literal} \\}}"}
+      		${13:CERTTYPE = "${14:\\{ ${15:expression | [string] literal} \\}}"}
+      		${16:CERTPASS = "${17:\\{ ${18:expression | [string] literal} \\}}"}
+      		${19:CERTVALUE = "${20:\\{ ${21:expression | [string] literal} \\}}"}
+      		${22:TIMEOUT = "${23:\\{ ${24:expression | [string] literal} \\}}"}
+      		${25:HEADERS = "${26:\\{ ${27:expression | [string] literal} \\}}"}
+      >
+      	$28
+      </MvCALL>
+      
+    '''
+  "Tag - Call":
+    prefix: "MvCALL"
+    body: '''
+      
+      <MvCALL ACTION = "${1:\\{ ${2:expression | [string] literal} \\}}" METHOD = "${3:get|post|head|xml|raw|options|put|delete|trace|connect|patch|link|unlink}${3/(g$)|(po$)|(h$)|(x$)|(r$)|(o$)|(pu$)|(d$)|(t$)|(c$)|(pa$)|(l$)|(u$)|.*/?1:et:?2:st:?3:ead:?4:ml:?5:aw:?6:ptions:?7:t:?8:elete:?9:race:?10:onnect:?11:tch:?12:ink:?13:nlink/}">
+      	$4
+      </MvCALL>
+      
+    '''
+  "Tag - Call Continue":
+    prefix: "MvCALLCONTINUE"
+    body: '''
+      
+      <MvCALLCONTINUE>
+      
+    '''
+  "Tag - Call Stop":
+    prefix: "MvCALLSTOP"
+    body: '''
+      
+      <MvCALLSTOP>
+      
+    '''
+  "Tag - Capture":
+    prefix: "MvCAPTURE"
+    body: '''
+      
+      <MvCAPTURE VARIABLE = "${1:\\{ ${2:expression | variable-name} \\}}" ${3:STANDARDOUTPUTLEVEL = "${4:html, text, compresswhitespace}"}>
+      	$5
+      </MvCAPTURE>
+      
+    '''
+  "Tag - Close":
+    prefix: "MvCLOSE"
+    body: '''
+      
+      <MvCLOSE NAME = "${1:\\{ ${2:expression | database alias} \\}}">
+      
+    '''
+  "Tag - Close View":
+    prefix: "MvCLOSEVIEW"
+    body: '''
+      
+      <MvCLOSEVIEW VALUE = "${1:\\{ ${2:expression | [string] literal} \\}}" ${3:NAME = "${4:\\{ ${5:expression | database alias} \\}}"}>
+      
+    '''
+  "Tag - Commerce":
+    prefix: "MvCOMMERCE"
+    body: '''
+      
+      <MvCOMMERCE>
+      	${2:<MvCOMMENT>
+      	| Provides communications between a Miva Script application and an external commerce library.
+      	| It will loop until it no longer receives data, or until it is explicitly halted with the <MvCOMMERCESTOP> tag.
+      	</MvCOMMENT>}
+      	$1
+      </MvCOMMERCE>
+      
+    '''
+  "Tag - Commerce Continue":
+    prefix: "MvCOMMERCECONTINUE"
+    body: '''
+      
+      <MvCOMMERCECONTINUE>
+      
+    '''
+  "Tag - Commerce Stop":
+    prefix: "MvCOMMERCESTOP"
+    body: '''
+      
+      <MvCOMMERCESTOP>
+      
+    '''
+  "Tag - Commit":
+    prefix: "MvCOMMIT"
+    body: '''
+      
+      <MvCOMMIT NAME = "${1:\\{ ${2:expression | literal} \\}}">
+      
+    '''
+  "Tag - Create":
+    prefix: "MvCREATE"
+    body: '''
+      
+      <MvCREATE NAME = "${1:\\{ ${2:expression | [string] literal} \\}}"
+      		  DATABASE = "${3:\\{ ${4:expression | [string] literal} \\}}"
+      		  FIELDS = "${5:\\{ ${6:expression | variable list} \\}}"
+      		  TYPE = "${7:xbase3 | user defined}${7/(x$)|.*/?1:base3/}">
+      
+    '''
+  "Tag - DB Command":
+    prefix: "MvDBCOMMAND"
+    body: '''
+      
+      <MvDBCOMMAND NAME = "${1:\\{ ${2:expression | [string] literal} \\}}"
+      		  COMMAND = "${3:\\{ ${4:expression | [string] command-name} \\}}"
+      		  ${5:PARAMETER = "${6:optional}"}>
+      
+    '''
+  "Tag - Delete":
+    prefix: "MvDELETE"
+    body: '''
+      
+      <MvDELETE NAME = "${1:\\{ ${2:expression | [string] literal } \\}}" ${3:VIEW = "${4:\\{ ${5:expression | [string] literal } \\}}"}>
+      
+    '''
+  "Tag - Dimension":
+    prefix: "MvDIMENSION"
+    body: '''
+      
+      <MvDIMENSION INDEX = "${1:\\{ ${2:expression | [numeric] literal } \\}}">
+      
+    '''
+  "Tag - Do (Verbose)":
+    prefix: "MvDO--v"
+    body: '''
+      
+      <MvDO FILE = "${1:\\{ ${2:expression | [string] literal} \\}}"
+      	  NAME = "${3:\\{ ${4:expression | [mixed] literal} \\}}"
+      	  VALUE = "{ $5 }">
+      
+    '''
+  "Tag - Do":
+    prefix: "MvDO"
+    body: '''
+      
+      <MvDO FILE = "{ $3 }" NAME = "$2" VALUE = "{ $1 }">
+      
+    '''
+  "Tag - Else":
+    prefix: "MvELSE"
+    body: '''
+      
+      <MvELSE>
+      
+    '''
+  "Tag - Else If":
+    prefix: "MvELSEIF"
+    body: '''
+      
+      <MvELSEIF EXPR = "{ ${1:variable-name} }">
+      
+    '''
+  "Tag - Eval":
+    prefix: "MvEVAL"
+    body: '''
+      
+      <MvEVAL EXPR = "{ ${1:expression} }">
+      
+    '''
+  "Tag - Exit":
+    prefix: "MvEXIT"
+    body: '''
+      
+      <MvEXIT>
+      
+    '''

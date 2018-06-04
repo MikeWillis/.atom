@@ -19,3 +19,43 @@
 # If you are unfamiliar with CSON, you can read more about it in the
 # Atom Flight Manual:
 # http://flight-manual.atom.io/using-atom/sections/basic-customization/#_cson
+
+'.text.html.php':
+  'PDO Fetch':
+    'prefix': 'fe'
+    'body': 'fetch(PDO::FETCH_ASSOC)'
+  'PDO Fetch All':
+    'prefix': 'fa'
+    'body': 'fetchAll(PDO::FETCH_ASSOC)'
+  'pre var_dump':
+    'prefix': 'pvd'
+    'body': 'echo "<pre>"; var_dump( ${1:$var} ); echo "</pre>";'
+  'pre print_r':
+    'prefix': 'ppr'
+    'body': 'echo "<pre>"; print_r( ${1:$var} ); echo "</pre>";'
+  'if_mine':
+    'prefix': 'iff'
+    'body': 'if ( ${1:condition} ) {\n\t${0:# code...}\n}\n'
+  'd_REQUEST':
+    'prefix': '\$_re'
+    'body': '\$_REQUEST["${1:Key}"]'
+  'd_POST':
+    'prefix': '\$_po'
+    'body': '\$_POST["${1:Key}"]'
+
+
+'.source.js':
+  '$ Doc Ready':
+    'prefix': 'ddr'
+    'body': '$(document).ready(function(){\n\t${1://code}\n});'
+  'jQuery Doc Ready':
+    'prefix': 'jdr'
+    'body': 'jQuery(document).ready(function(){\n\t${1://code}\n});'
+  'jQuery Loading Timer':
+    'prefix': 'jql'
+    'body': '(function() {\n\tvar jQueryLoading = setInterval(function() {\n\t\tif (typeof($) === "function") {\n\t\t\tclearInterval(jQueryLoading);\n\t\t\t${1://code}\n\t\t}\n\t}, 100);\n})();'
+  'Self Executing Function':
+    'prefix': 'sef'
+    'body': '(function(){\n\t${1://code}\n})();'
+
+

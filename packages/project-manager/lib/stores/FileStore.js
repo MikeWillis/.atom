@@ -1,17 +1,18 @@
 'use babel';
 
-import { observable, action, asFlat } from 'mobx';
+import { observable, action, asFlat, transaction } from 'mobx';
 import CSON from 'season';
 import fs from 'fs';
 import os from 'os';
-import _ from 'underscore-plus';
+import { deepExtend, each } from 'underscore-plus';
 
 export default class FileStore {
   @observable data = asFlat([]);
+  @observable fetching = false;
   templates = [];
 
   constructor() {
-    fs.exists(FileStore.getPath(), exists => {
+    fs.exists(FileStore.getPath(), (exists) => {
       if (exists) {
         this.observeFile();
       } else {
@@ -35,48 +36,74 @@ export default class FileStore {
   }
 
   @action fetch() {
+    this.fetching = true;
     CSON.readFile(FileStore.getPath(), (err, data) => {
-      let results = [];
-      if (!err) {
-        results = data;
-      }
+      transaction(() => {
+        let results = [];
+        if (err) {
+          FileStore.handleError(err);
+        }
+        if (!err && data !== null) {
+          results = data;
+        }
 
-      this.data.clear();
-      this.templates = [];
+        this.data.clear();
+        this.templates = [];
 
-      // Support for old structure.
-      if (Array.isArray(results) === false) {
-        results = Object.keys(results).map(k => results[k]);
-      }
+        // Support for old structure.
+        if (Array.isArray(results) === false) {
+          results = Object.keys(results).map(k => results[k]);
+        }
 
-      // Make sure we have an array.
-      if (Array.isArray(results) === false) {
-        results = [];
-      }
+        // Make sure we have an array.
+        if (Array.isArray(results) === false) {
+          results = [];
+        }
 
-      for (let result of results) {
-        const templateName = result.template || null;
+        each(results, (res) => {
+          let result = res;
+          const templateName = result.template || null;
 
-        if (templateName) {
-          const template = results.filter(props => props.title === templateName);
+          if (templateName) {
+            const template = results.filter(props => props.title === templateName);
 
-          if (template.length) {
-            result = _.deepExtend({}, template[0], result);
+            if (template.length) {
+              result = deepExtend({}, template[0], result);
+            }
           }
-        }
 
-        if (this.isProject(result)) {
-          result.source = 'file';
+          if (FileStore.isProject(result)) {
+            result.source = 'file';
 
-          this.data.push(result);
-        } else {
-          this.templates.push(result);
-        }
-      }
+            this.data.push(result);
+          } else {
+            this.templates.push(result);
+          }
+        }, this);
+
+        this.fetching = false;
+      });
     });
   }
 
-  isProject(settings) {
+  static handleError(err) {
+    switch (err.name) {
+      case 'SyntaxError': {
+        atom.notifications.addError('There is a syntax error in your projects file. Run **Project Manager: Edit Projects** to open and fix the issue.', {
+          detail: err.message,
+          description: `Line: ${err.location.first_line} Row: ${err.location.first_column}`,
+          dismissable: true,
+        });
+        break;
+      }
+
+      default: {
+        // No default.
+      }
+    }
+  }
+
+  static isProject(settings) {
     if (typeof settings.paths === 'undefined') {
       return false;
     }

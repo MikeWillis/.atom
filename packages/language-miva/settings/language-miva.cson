@@ -1,0 +1,24 @@
+".text.mv":
+  editor:
+    commentStart: "<!-- "
+    commentEnd: " -->"
+".text.html.mvt":
+  editor:
+    increaseIndentPattern: '''
+      (?x)
+      		^\\s*
+      		(<(mvt:else)[^>]*?>)
+      		|
+      		(<\\?php\\s*\\b(if|else|elseif|for|foreach|while)\\b.*:(?!.*end\\1))
+      		
+    '''
+    decreaseIndentPattern: '''
+      (?x)
+      		^\\s*
+      		(<(mvt:else)[^>]*?>)
+      		|
+      		<\\?(php)?\\s+(else(if)?|end(if|for(each)?|while))
+      		
+    '''
+    commentStart: "<!-- "
+    commentEnd: " -->"

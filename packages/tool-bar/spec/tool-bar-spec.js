@@ -1,8 +1,7 @@
 'use babel';
 
 /* eslint-env browser */
-
-const supportFullWidth = typeof atom.workspace.addHeaderPanel === 'function';
+/* global advanceClock */
 
 function getGlyph (elm) {
   return window.getComputedStyle(elm, ':before')
@@ -97,7 +96,55 @@ describe('Tool Bar package', () => {
           tooltip: 'About Atom'
         });
         expect(toolBar.children.length).toBe(1);
-        expect(toolBar.firstChild.dataset.originalTitle).toBe('About Atom');
+        const element = toolBar.firstChild;
+        element.dispatchEvent(new CustomEvent('mouseenter', {bubbles: false}));
+        element.dispatchEvent(new CustomEvent('mouseover', {bubbles: true}));
+        advanceClock(1000);
+        const tooltip = document.body.querySelector('.tooltip');
+        expect(tooltip).not.toBeNull();
+        expect(tooltip.outerHTML.indexOf('About Atom')).not.toBe(-1);
+      });
+
+      it('with tooltip object', () => {
+        toolBarAPI.addButton({
+          icon: 'octoface',
+          callback: 'application:about',
+          tooltip: {
+            html: false,
+            title: '<h1>About Atom</h1>'
+          }
+        });
+        expect(toolBar.children.length).toBe(1);
+        const element = toolBar.firstChild;
+        element.dispatchEvent(new CustomEvent('mouseenter', {bubbles: false}));
+        element.dispatchEvent(new CustomEvent('mouseover', {bubbles: true}));
+        advanceClock(1000);
+        const tooltip = document.body.querySelector('.tooltip');
+        expect(tooltip).not.toBeNull();
+        expect(tooltip.outerHTML.indexOf('&lt;h1&gt;About Atom&lt;/h1&gt;')).not.toBe(-1);
+      });
+
+      it('with text', () => {
+        toolBarAPI.addButton({
+          icon: 'octoface',
+          callback: 'application:about',
+          text: '<span>text</span>'
+        });
+        expect(toolBar.children.length).toBe(1);
+        const element = toolBar.firstChild;
+        expect(element.outerHTML.indexOf('&lt;span&gt;text&lt;/span&gt;')).not.toBe(-1);
+      });
+
+      it('with html', () => {
+        toolBarAPI.addButton({
+          icon: 'octoface',
+          callback: 'application:about',
+          text: '<span>text</span>',
+          html: true
+        });
+        expect(toolBar.children.length).toBe(1);
+        const element = toolBar.firstChild;
+        expect(element.outerHTML.indexOf('<span>text</span>')).not.toBe(-1);
       });
 
       it('using default iconset', () => {
@@ -191,6 +238,7 @@ describe('Tool Bar package', () => {
         expect(toolBar.children.length).toBe(1);
         expect(toolBar.firstChild.classList.contains('disabled')).toBe(true);
       });
+
       it('clicking button with command callback', () => {
         const spy = jasmine.createSpy();
         toolBarAPI.addButton({
@@ -204,15 +252,31 @@ describe('Tool Bar package', () => {
         expect(spy.mostRecentCall.args[0].type).toEqual('application:about');
       });
 
-      it('clicking button with function callback', () => {
+      it('clicking button with multiple commands callback', () => {
         const spy = jasmine.createSpy();
         toolBarAPI.addButton({
+          icon: 'octoface',
+          callback: ['tool-bar:callback-1', 'tool-bar:callback-2']
+        });
+        jasmine.attachToDOM(toolBar);
+        atom.commands.onWillDispatch(spy);
+        toolBar.firstChild.click();
+        expect(spy).toHaveBeenCalled();
+        expect(spy.calls.length).toBe(2);
+        expect(spy.calls[0].args[0].type).toEqual('tool-bar:callback-1');
+        expect(spy.calls[1].args[0].type).toEqual('tool-bar:callback-2');
+      });
+
+      it('clicking button with function callback', () => {
+        const spy = jasmine.createSpy();
+        const button = toolBarAPI.addButton({
           icon: 'octoface',
           callback: spy
         });
         jasmine.attachToDOM(toolBar);
         toolBar.firstChild.click();
         expect(spy).toHaveBeenCalled();
+        expect(spy.mostRecentCall.object).toBe(button);
       });
 
       it('clicking button with function callback containing data', () => {
@@ -446,6 +510,26 @@ describe('Tool Bar package', () => {
             });
           });
 
+          it('and multiple commands callback', () => {
+            const spy = jasmine.createSpy();
+            toolBarAPI.addButton({
+              icon: 'octoface',
+              callback: {
+                '': 'tool-bar:modifier-default',
+                'ctrl': ['tool-bar:callback-1', 'tool-bar:callback-2']
+              }
+            });
+            jasmine.attachToDOM(toolBar);
+            atom.commands.onWillDispatch(spy);
+            toolBar.firstChild.dispatchEvent(buildClickEvent({
+              ctrlKey: true
+            }));
+            expect(spy).toHaveBeenCalled();
+            expect(spy.calls.length).toBe(2);
+            expect(spy.calls[0].args[0].type).toEqual('tool-bar:callback-1');
+            expect(spy.calls[1].args[0].type).toEqual('tool-bar:callback-2');
+          });
+
           describe('and function callback', () => {
             it('executes', () => {
               const spy = jasmine.createSpy();
@@ -526,20 +610,18 @@ describe('Tool Bar package', () => {
       leftPanelElement = atom.views.getView(atom.workspace.panelContainers.left);
     });
 
-    if (supportFullWidth) {
-      describe('by triggering tool-bar:position-top', () => {
-        it('adds the tool bar view to header pane', () => {
-          atom.commands.dispatch(workspaceElement, 'tool-bar:position-top');
-          atom.config.set('tool-bar.fullWidth', true);
-          expect(headerPanelElement.querySelectorAll('.tool-bar').length).toBe(1);
-          expect(topPanelElement.querySelector('.tool-bar')).toBeNull();
-          expect(rightPanelElement.querySelector('.tool-bar')).toBeNull();
-          expect(footerPanelElement.querySelector('.tool-bar')).toBeNull();
-          expect(bottomPanelElement.querySelector('.tool-bar')).toBeNull();
-          expect(leftPanelElement.querySelector('.tool-bar')).toBeNull();
-        });
+    describe('by triggering tool-bar:position-top', () => {
+      it('adds the tool bar view to header pane', () => {
+        atom.commands.dispatch(workspaceElement, 'tool-bar:position-top');
+        atom.config.set('tool-bar.fullWidth', true);
+        expect(headerPanelElement.querySelectorAll('.tool-bar').length).toBe(1);
+        expect(topPanelElement.querySelector('.tool-bar')).toBeNull();
+        expect(rightPanelElement.querySelector('.tool-bar')).toBeNull();
+        expect(footerPanelElement.querySelector('.tool-bar')).toBeNull();
+        expect(bottomPanelElement.querySelector('.tool-bar')).toBeNull();
+        expect(leftPanelElement.querySelector('.tool-bar')).toBeNull();
       });
-    }
+    });
 
     describe('by triggering tool-bar:position-top with full width disabled', () => {
       it('adds the tool bar view to top pane', () => {
@@ -567,20 +649,18 @@ describe('Tool Bar package', () => {
       });
     });
 
-    if (supportFullWidth) {
-      describe('by triggering tool-bar:position-bottom', () => {
-        it('adds the tool bar view to footer pane', () => {
-          atom.commands.dispatch(workspaceElement, 'tool-bar:position-bottom');
-          atom.config.set('tool-bar.fullWidth', true);
-          expect(headerPanelElement.querySelector('.tool-bar')).toBeNull();
-          expect(topPanelElement.querySelector('.tool-bar')).toBeNull();
-          expect(rightPanelElement.querySelector('.tool-bar')).toBeNull();
-          expect(footerPanelElement.querySelectorAll('.tool-bar').length).toBe(1);
-          expect(bottomPanelElement.querySelector('.tool-bar')).toBeNull();
-          expect(leftPanelElement.querySelector('.tool-bar')).toBeNull();
-        });
+    describe('by triggering tool-bar:position-bottom', () => {
+      it('adds the tool bar view to footer pane', () => {
+        atom.commands.dispatch(workspaceElement, 'tool-bar:position-bottom');
+        atom.config.set('tool-bar.fullWidth', true);
+        expect(headerPanelElement.querySelector('.tool-bar')).toBeNull();
+        expect(topPanelElement.querySelector('.tool-bar')).toBeNull();
+        expect(rightPanelElement.querySelector('.tool-bar')).toBeNull();
+        expect(footerPanelElement.querySelectorAll('.tool-bar').length).toBe(1);
+        expect(bottomPanelElement.querySelector('.tool-bar')).toBeNull();
+        expect(leftPanelElement.querySelector('.tool-bar')).toBeNull();
       });
-    }
+    });
 
     describe('by triggering tool-bar:position-bottom with full width disabled', () => {
       it('adds the tool bar view to bottom pane', () => {

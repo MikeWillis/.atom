@@ -1,10 +1,7 @@
-'use babel';
+const {CompositeDisposable, Emitter} = require('atom');
+const rafDebounce = require('./raf-debounce');
 
-import {CompositeDisposable, Emitter} from 'atom';
-
-const supportFullWidth = typeof atom.workspace.addHeaderPanel === 'function';
-
-export default class ToolBarView {
+module.exports = class ToolBarView {
 
   constructor () {
     this.element = document.createElement('div');
@@ -36,35 +33,31 @@ export default class ToolBarView {
       atom.config.observe('tool-bar.iconSize', newValue => {
         this.updateSize(newValue);
       }),
-      atom.config.onDidChange('tool-bar.position', ({newValue, oldValue}) => {
+      atom.config.onDidChange('tool-bar.position', () => {
         if (atom.config.get('tool-bar.visible')) {
           this.show();
         }
       }),
-      atom.config.onDidChange('tool-bar.visible', ({newValue, oldValue}) => {
+      atom.config.onDidChange('tool-bar.visible', ({newValue}) => {
         if (newValue) {
           this.show();
         } else {
           this.hide();
         }
+      }),
+      atom.config.onDidChange('tool-bar.fullWidth', () => {
+        if (atom.config.get('tool-bar.visible')) {
+          this.show();
+        }
       })
     );
-
-    if (supportFullWidth) {
-      this.subscriptions.add(
-        atom.config.onDidChange('tool-bar.fullWidth', ({newValue, oldValue}) => {
-          if (atom.config.get('tool-bar.visible')) {
-            this.show();
-          }
-        })
-      );
-    }
 
     if (atom.config.get('tool-bar.visible')) {
       this.show();
     }
 
-    this.drawGutter = this.drawGutter.bind(this);
+    this.drawGutter = rafDebounce(this.drawGutter.bind(this));
+    this.subscriptions.add(this.drawGutter);
 
     this.element.addEventListener('scroll', this.drawGutter);
     window.addEventListener('resize', this.drawGutter);
@@ -73,7 +66,7 @@ export default class ToolBarView {
   addItem (newItem) {
     newItem.priority = this.calculatePriority(newItem);
 
-    if (atom.devMode) {
+    if (atom.inDevMode()) {
       newItem.element.dataset.group = newItem.group;
       newItem.element.dataset.priority = newItem.priority;
     }
@@ -151,7 +144,7 @@ export default class ToolBarView {
       'tool-bar-vertical'
     );
 
-    const fullWidth = supportFullWidth && atom.config.get('tool-bar.fullWidth');
+    const fullWidth = atom.config.get('tool-bar.fullWidth');
 
     switch (position) {
       case 'Top':
@@ -180,26 +173,7 @@ export default class ToolBarView {
     }
     this.element.classList.add(...classNames);
 
-    this.updateMenu(position);
     this.drawGutter();
-  }
-
-  updateMenu (position) {
-    const packagesMenu = atom.menu.template.find(({label}) =>
-      (label === 'Packages' || label === '&Packages'));
-
-    const toolBarMenu = packagesMenu && packagesMenu.submenu.find(({label}) =>
-      (label === 'Tool Bar' || label === '&Tool Bar'));
-
-    const positionsMenu = toolBarMenu && toolBarMenu.submenu.find(({label}) =>
-      (label === 'Position' || label === '&Position'));
-
-    const positionMenu = positionMenu && positionsMenu.submenu.find(({label}) =>
-      label === position);
-
-    if (positionMenu) {
-      positionMenu.checked = true;
-    }
   }
 
   drawGutter () {
@@ -236,12 +210,6 @@ export default class ToolBarView {
   }
 
   toggle () {
-    if (this.element.parentNode) {
-      this.hide();
-      atom.config.set('tool-bar.visible', false);
-    } else {
-      this.show();
-      atom.config.set('tool-bar.visible', true);
-    }
+    atom.config.set('tool-bar.visible', !atom.config.get('tool-bar.visible'));
   }
-}
+};

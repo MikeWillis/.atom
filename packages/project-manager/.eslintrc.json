@@ -10,8 +10,13 @@
   },
   "rules": {
     "global-require": 0,
-    "import/no-extraneous-dependencies": 0,
-    "import/no-unresolved": 0,
-    "import/prefer-default-import": 0
+    "no-unused-vars": ["error", {
+      "vars": "all",
+      "args": "after-used",
+      "ignoreRestSiblings": true
+    }]
+  },
+  "settings": {
+    "import/core-modules": ["atom"]
   }
 }

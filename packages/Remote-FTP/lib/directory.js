@@ -1,214 +1,256 @@
-var __hasProp = {}.hasOwnProperty,
-	__extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-	path = require('path'),
-	File = require('./file'),
-	Model = require('theorist').Model;
+'use babel';
 
-module.exports = Directory = (function (parent) {
-	__extends(Directory, parent);
+import path from 'path';
+import { Emitter } from 'event-kit';
+import { multipleHostsEnabled, simpleSort } from './helpers';
+import File from './file';
 
-	Directory.properties({
-		parent: null,
-		name: '',
-		path: '',
-		client: null,
-		isExpanded: false,
-		status: 0,
-		folders: [],
-		files: []
-	});
+class Directory {
+  constructor(params) {
+    this.emitter = new Emitter();
 
-	Directory.prototype.accessor('isRoot', function () {
-		return this.parent === null;
-	});
+    this.parent = null;
+    this.name = '';
+    this.path = '';
+    this.client = null;
+    this.isExpanded = false;
+    this.isSelected = false;
+    this.status = 0;
+    this.folders = [];
+    this.files = [];
+    this.original = null;
 
-	Directory.prototype.accessor('local', function () {
-		if (this.parent)
-			return path.normalize(path.join(this.parent.local, this.name)).replace(/\\/g, '/');
+    Object.keys(params).forEach((n) => {
+      if (Object.prototype.hasOwnProperty.call(this, n)) {
+        this[n] = params[n];
+      }
+    });
+  }
 
-		return atom.project.getPaths()[0];
-		//return atom.project.path;
-		//return atom.project.resolve('/' + this.name);
-	});
+  destroy() {
+    this.folders.forEach((folder) => {
+      folder.destroy();
+    });
+    this.folders = [];
 
-	Directory.prototype.accessor('remote', function () {
-		if (this.parent)
-			return path.normalize(path.join(this.parent.remote, this.name)).replace(/\\/g, '/');
-		return this.path;
-	});
+    this.files.forEach((file) => {
+      file.destroy();
+    });
+    this.files = [];
 
-	Directory.prototype.accessor('root', function () {
-		if (this.parent)
-			return this.parent.root;
-		return this;
-	});
+    if (!this.isRoot) {
+      this.emitter.emit('destroyed');
+      this.emitter.dispose();
+    }
+  }
 
-	function Directory () {
-		Directory.__super__.constructor.apply(this, arguments);
-	}
+  sort() {
+    this.folders.sort(simpleSort);
+    this.files.sort(simpleSort);
+  }
 
-	Directory.prototype.destroy = function () {
+  exists(name, isdir) {
+    if (isdir) {
+      for (let a = 0, b = this.folders.length; a < b; ++a) {
+        if (this.folders[a].name === name) { return a; }
+      }
+    } else {
+      for (let a = 0, b = this.files.length; a < b; ++a) {
+        if (this.files[a].name === name) { return a; }
+      }
+    }
 
-		this.folders.forEach(function (folder) {
-			folder.destroy();
-		});
-		this.folders = [];
+    return null;
+  }
 
-		this.files.forEach(function (file) {
-			file.destroy();
-		});
-		this.files = [];
+  open(recursive, complete) {
+    const client = this.root.client;
 
-		if (!this.isRoot)
-			Directory.__super__.destroy.apply(this, arguments);
-	};
+    client.list(this.remote, false, (err, list) => {
+      if (err) {
+        atom.notifications.addError(`Remote FTP: ${err}`, {
+          dismissable: false,
+        });
+        return;
+      }
 
-	Directory.prototype.sort = function () {
+      this.status = 1;
 
-		this.folders.sort(function (a, b) {
-			if (a.name == b.name)
-				return 0;
-			return a.name > b.name ? 1 : -1;
-		});
+      const folders = [];
+      const files = [];
 
-		this.files.sort(function (a, b) {
-			if (a.name == b.name)
-				return 0;
-			return a.name > b.name ? 1 : -1;
-		});
+      list.forEach((item) => {
+        const name = path.basename(item.name);
+        let index;
+        let entry;
 
-	};
+        if (item.type === 'd' || item.type === 'l') {
+          if (name === '.' || name === '..') { return; }
 
-	Directory.prototype.exists = function (name, isdir) {
-		if (isdir) {
-			for (a = 0, b = this.folders.length; a < b; ++a)
-				if (this.folders[a].name == name)
-					return a;
-		} else {
-			for (a = 0, b = this.files.length; a < b; ++a)
-				if (this.files[a].name == name)
-					return a;
-		}
-		return null;
-	};
+          index = this.exists(name, true);
 
-	Directory.prototype.open = function (recursive, complete) {
-		var self = this,
-			client = self.root.client;
+          if (index === null) {
+            entry = new Directory({
+              parent: this,
+              original: item,
+              name,
+            });
+          } else {
+            entry = this.folders[index];
+            this.folders.splice(index, 1);
+          }
 
-		client.list(self.remote, false, function (err, list) {
-			if (err) {
-				atom.notifications.addError("Remote FTP: " + err);
-				return;
-			}
+          folders.push(entry);
 
+          this.emitter.emit('did-change-folder', folders);
+        } else {
+          index = this.exists(name, true);
 
-			self.status = 1;
+          if (index === null) {
+            entry = new File({
+              parent: this,
+              original: item,
+              name,
+            });
+          } else {
+            entry = this.files[index];
+            this.files.splice(index, 1);
+          }
 
-			var folders = [],
-				files = [];
+          entry.size = item.size;
+          entry.date = item.date;
 
-			list.forEach(function (item) {
-				var index,
-					name = path.basename(item.name),
-					entry;
-				if (item.type == 'd' || item.type == 'l') {
-					if (name == '.' || name == '..')
-						return;
-					if ((index = self.exists(name, true)) === null) {
-						entry = new Directory({
-							parent: self,
-							name: name
-						});
-					} else {
-						entry = self.folders[index];
-						self.folders.splice(index, 1);
-					}
-					folders.push(entry);
-				} else {
-					if ((index = self.exists(name, false)) === null) {
-						entry = new File({
-							parent: self,
-							name: name
-						});
-					} else {
-						entry = self.files[index];
-						self.files.splice(index, 1);
-					}
-					entry.size = item.size;
-					entry.date = item.date;
-					files.push(entry);
-				}
-			});
+          files.push(entry);
 
-			self.folders.forEach(function (folder) { folder.destroy(); });
-			self.folders = folders;
+          this.emitter.emit('did-change-file', files);
+        }
+      });
 
-			self.files.forEach(function (file) { file.destroy(); });
-			self.files = files;
+      this.folders.forEach((folder) => { folder.destroy(); });
+      this.folders = folders;
 
-			if (recursive) {
-				self.folders.forEach(function (folder) {
-					if (folder.status === 0)
-						return;
+      this.files.forEach((file) => { file.destroy(); });
+      this.files = files;
 
-					folder.open(true);
-				});
-			}
+      if (recursive) {
+        this.folders.forEach((folder) => {
+          if (folder.status === 0) { return; }
 
-			if (typeof(complete) === "function")
-			{
-				complete.call(null);
-			}
-		});
-	};
+          folder.open(true);
+        });
+      }
 
-	Directory.prototype.openPath = function (path) {
+      if (typeof (complete) === 'function') {
+        complete.call(null);
+      }
 
-		var self = this,
-			client = self.root.client;
+      this.emitter.emit('did-change-items', this);
+    });
+  }
 
-		var remainingPath = path.replace(self.remote, "");
-		if (remainingPath.startsWith("/"))
-			remainingPath = remainingPath.substr(1);
+  openPath(opath) {
+    let remainingPath = opath.replace(this.remote, '');
 
-		if (remainingPath.length > 0)
-		{
-			var remainingPathSplit = remainingPath.split("/");
+    if (remainingPath.startsWith('/')) {
+      remainingPath = remainingPath.substr(1);
+    }
 
-			if (remainingPathSplit.length > 0 && self.folders.length > 0)
-			{
-				var nextPath = self.remote;
+    if (remainingPath.length > 0) {
+      const remainingPathSplit = remainingPath.split('/');
 
-				if (!nextPath.endsWith("/"))
-					nextPath += "/";
+      if (remainingPathSplit.length > 0 && this.folders.length > 0) {
+        let nextPath = this.remote;
 
-				nextPath += remainingPathSplit[0];
+        if (!nextPath.endsWith('/')) { nextPath += '/'; }
 
-				self.folders.forEach(function (folder)
-				{
-					if (folder.remote === nextPath)
-					{
-						folder.isExpanded = true;
+        nextPath += remainingPathSplit[0];
 
-						if (folder.folders.length > 0)
-						{
-							folder.openPath(path);
-						}
-						else
-						{
-							folder.open(false, function()
-							{
-								folder.openPath(path);
-							});
-						}
+        this.folders.forEach((folder) => {
+          if (folder.remote === nextPath) {
+            folder.isExpanded = true;
 
-						return false;
-					}
-				});
-			}
-		}
-	};
+            if (folder.folders.length > 0) {
+              folder.openPath(opath);
+            } else {
+              folder.open(false, () => {
+                folder.openPath(opath);
+              });
+            }
+          }
+        });
+      }
+    }
+  }
 
-	return Directory;
-})(Model);
+  onChangeFolder(callback) {
+    return this.emitter.on('did-change-folder', callback);
+  }
+
+  onChangeFile(callback) {
+    return this.emitter.on('did-change-file', callback);
+  }
+
+  onChangeItems(callback) {
+    return this.emitter.on('did-change-items', callback);
+  }
+
+  onChangeExpanded(callback) {
+    return this.emitter.on('did-change-expanded', callback);
+  }
+
+  onChangeSelect(callback) {
+    return this.emitter.on('did-change-select', callback);
+  }
+
+  onDestroyed(callback) {
+    return this.emitter.on('destroyed', callback);
+  }
+
+  get isRoot() {
+    return this.parent === null;
+  }
+
+  get root() {
+    if (this.parent) {
+      return this.parent.root;
+    }
+
+    return this;
+  }
+
+  get local() {
+    if (this.parent) {
+      let p = path.normalize(path.join(this.parent.local, this.name));
+
+      if (path.sep !== '/') p = p.replace(/\\/g, '/');
+
+      return p;
+    }
+
+    return multipleHostsEnabled() === true ? this.client.projectPath : atom.project.getPaths()[0];
+  }
+
+  get remote() {
+    if (this.parent) {
+      let p = path.normalize(path.join(this.parent.remote, this.name));
+
+      if (path.sep !== '/') p = p.replace(/\\/g, '/');
+
+      return p;
+    }
+
+    return this.path;
+  }
+
+  set setIsExpanded(value) {
+    this.emitter.emit('did-change-expanded', value);
+    this.isExpanded = value;
+  }
+
+  set setIsSelected(value) {
+    this.isSelected = value;
+    this.emitter.emit('did-change-select', value);
+  }
+}
+
+export default Directory;

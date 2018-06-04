@@ -4,13 +4,18 @@ A high contrast theme inspired by figs. The most prevalent colours are variants 
 
 *Ficus* comes in standalone light and dark variants (see further info below).
 
-## Screenshot
+## Screenshots
 
-![ficus light screenshot](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_sample.png)
+![ficus light screenshot html](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_html.png)
 
-*The font in the screenshot is [Hack](https://github.com/chrissimpkins/Hack), set at 14px*.  
-*Demo code by http://codemirror.net/mode/javascript/index.html*  
-*The UI theme is https://atom.io/themes/atom-material-ui*.
+![ficus light screenshot scss](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_scss.png)
+
+![ficus light screenshot js](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_js.png)
+
+![ficus light screenshot md](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_md.png)
+
+*The font is [Iosevka term](https://github.com/be5invis/Iosevka)*.  
+*The UI is [Atom Material](https://github.com/atom-material/atom-material-ui)*.
 
 ## Download
 
@@ -22,6 +27,6 @@ apm install ficus-syntax
 
 ## Further information
 
-Project page: [http://www.protesilaos.com/ficus](http://www.protesilaos.com/ficus)
+Project page: [https://protesilaos.com/ficus](https://protesilaos.com/ficus)
 
 Ficus dark version: [https://atom.io/themes/ficus-dark-syntax](https://atom.io/themes/ficus-dark-syntax)

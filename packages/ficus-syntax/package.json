@@ -2,40 +2,39 @@
   "_args": [
     [
       {
-        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
         "scope": null,
         "escapedName": null,
         "name": null,
-        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
-        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
+        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
         "type": "local"
       },
-      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116822-11376-1a55skf"
+      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-117610-5612-1gn7j0w.3n47no2yb9"
     ]
   ],
-  "_from": "..\\d-116822-11376-1tyf3zr\\package.tgz",
-  "_id": "ficus-syntax@1.0.0",
+  "_from": "..\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
+  "_id": "ficus-syntax@2.1.0",
   "_inCache": true,
-  "_installable": true,
   "_location": "/ficus-syntax",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
     "scope": null,
     "escapedName": null,
     "name": null,
-    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
-    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
+    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
+    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
     "type": "local"
   },
   "_requiredBy": [
     "#USER"
   ],
-  "_resolved": "file:..\\d-116822-11376-1tyf3zr\\package.tgz",
-  "_shasum": "51415716a2fce48679ba6cb9468f9a679ab58493",
+  "_resolved": "file:..\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
+  "_shasum": "5dbed01d8312f75d0dbdae6b20e8bda0081d06db",
   "_shrinkwrap": null,
-  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-116822-11376-1tyf3zr\\package.tgz",
-  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-116822-11376-1a55skf",
+  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-117610-5612-1btfya6.oaais02j4i\\package.tgz",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-117610-5612-1gn7j0w.3n47no2yb9",
   "bugs": {
     "url": "https://github.com/protesilaos/ficus-light-syntax/issues"
   },
@@ -56,12 +55,22 @@
   "license": "MIT",
   "name": "ficus-syntax",
   "optionalDependencies": {},
-  "readme": "# Ficus syntax theme (light version)\n\nA high contrast theme inspired by figs. The most prevalent colours are variants of magenta, violet, green, yellow, and cyan.\n\n*Ficus* comes in standalone light and dark variants (see further info below).\n\n## Screenshot\n\n![ficus light screenshot](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_sample.png)\n\n*The font in the screenshot is [Hack](https://github.com/chrissimpkins/Hack), set at 14px*.  \n*Demo code by http://codemirror.net/mode/javascript/index.html*  \n*The UI theme is https://atom.io/themes/atom-material-ui*.\n\n## Download\n\nSearch for `ficus-syntax` in Settings > Install > Themes. Or install it directly using the command:\n\n```shell\napm install ficus-syntax\n```\n\n## Further information\n\nProject page: [http://www.protesilaos.com/ficus](http://www.protesilaos.com/ficus)\n\nFicus dark version: [https://atom.io/themes/ficus-dark-syntax](https://atom.io/themes/ficus-dark-syntax)\n",
+  "readme": "# Ficus syntax theme (light version)\n\nA high contrast theme inspired by figs. The most prevalent colours are variants of magenta, violet, green, yellow, and cyan.\n\n*Ficus* comes in standalone light and dark variants (see further info below).\n\n## Screenshots\n\n![ficus light screenshot html](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_html.png)\n\n![ficus light screenshot scss](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_scss.png)\n\n![ficus light screenshot js](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_js.png)\n\n![ficus light screenshot md](https://raw.githubusercontent.com/protesilaos/prot16/master/ficus/img/ficus_light_md.png)\n\n*The font is [Iosevka term](https://github.com/be5invis/Iosevka)*.  \n*The UI is [Atom Material](https://github.com/atom-material/atom-material-ui)*.\n\n## Download\n\nSearch for `ficus-syntax` in Settings > Install > Themes. Or install it directly using the command:\n\n```shell\napm install ficus-syntax\n```\n\n## Further information\n\nProject page: [https://protesilaos.com/ficus](https://protesilaos.com/ficus)\n\nFicus dark version: [https://atom.io/themes/ficus-dark-syntax](https://atom.io/themes/ficus-dark-syntax)\n",
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/protesilaos/ficus-light-syntax.git"
   },
   "theme": "syntax",
-  "version": "1.0.0"
+  "version": "2.1.0",
+  "_atomModuleCache": {
+    "version": 1,
+    "dependencies": [],
+    "extensions": {
+      ".json": [
+        "package.json"
+      ]
+    },
+    "folders": []
+  }
 }

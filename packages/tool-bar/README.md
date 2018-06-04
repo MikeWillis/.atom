@@ -1,8 +1,9 @@
 # Atom Tool Bar
 
 [![Travis CI](https://travis-ci.org/suda/tool-bar.svg?branch=master)](https://travis-ci.org/suda/tool-bar)
-[![Circle CI](https://circleci.com/gh/suda/tool-bar/tree/master.svg?style=svg)](https://circleci.com/gh/suda/tool-bar/tree/master)
+[![Circle CI](https://circleci.com/gh/suda/tool-bar/tree/master.svg?style=shield)](https://circleci.com/gh/suda/tool-bar/tree/master)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/xtm6u3sn3oil50da?svg=true)](https://ci.appveyor.com/project/suda/tool-bar)
+[![apm](https://img.shields.io/apm/dm/tool-bar.svg)]()
 [![Chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/suda/tool-bar?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This package provides extensible tool bar for Atom.
@@ -45,6 +46,11 @@ On which edge of the editor should the tool bar appear. Possible options:
 
 When on top/bottom, expand to full window width.
 
+### Use TouchBar
+
+If your computer is equipped with a TouchBar (only Apple MacBook Pro series
+currently) it can display up to seven tool bar buttons there.
+
 ## Plugins
 
 *   [Flex Tool Bar](https://atom.io/packages/flex-tool-bar)
@@ -79,7 +85,7 @@ Make sure the following properties are part of your `package.json`.
 }
 ```
 
-We recommend using [Atom-Package-Deps](https://github.com/steelbrain/package-deps) 
+We recommend using [Atom-Package-Deps](https://github.com/steelbrain/package-deps)
 in your package for installing dependency packages like this package.
 
 ### Main package file
@@ -153,10 +159,16 @@ export function consumeToolBar(getToolBar) {
         console.log(data);
       },
       'alt+shift': 'application:cmd-5',       // Multiple modifiers
-      'alt+ctrl+shift': 'application:cmd-6'   // All modifiers 
+      'alt+ctrl+shift': 'application:cmd-6'   // All modifiers
     },
     data: 'foo'
   });
+
+  // Calling multiple callbacks at once
+  toolBar.addButton({
+    icon: 'octoface',
+    callback: ['application:cmd-1', 'application:cmd-2']
+  });  
 
   // Adding spacer and button at the beginning of the tool bar
   toolBar.addSpacer({priority: 10});
@@ -164,6 +176,27 @@ export function consumeToolBar(getToolBar) {
     icon: 'octoface',
     callback: 'application:about',
     priority: 10
+  });
+
+  // Adding text button
+  toolBar.addButton({
+    text: 'hello',
+    callback: 'application:about'
+  });
+
+  // Text buttons can also have an icon
+  toolBar.addButton({
+    icon: 'octoface',
+    text: 'hello',
+    callback: 'application:about'
+  });
+
+  // Text buttons can be html
+  toolBar.addButton({
+    icon: 'octoface',
+    text: '<b>BIG</b> button',
+    html: true,
+    callback: 'application:about'
   });
 
   // Cleaning up when tool bar is deactivated
@@ -176,19 +209,27 @@ export function consumeToolBar(getToolBar) {
 
 ## Methods
 
-### `.addButton({icon, callback, priority, tooltip, data})`
+### `.addButton({icon, iconset, text, html, callback, priority, tooltip, data})`
 
-The method `addButton` requires an object with at least the properties `icon`
-and `callback`. The `icon` can be any single icon from the `iconset`. The
-`callback` must be an Atom command string, an custom callback function or an
+The method `addButton` requires an object with at least the property `callback`. The
+`callback` must be an Atom command string, a custom callback function or an
 object where the keys are key modifiers (`alt`, `ctrl` or `shift`) and the
-values are commands or custom function (see [example](#example)).
+values are commands or custom functions (see [example](#example)).
 
-The remaining properties `tooltip` (default there is no tooltip),
-`iconset` (defaults to `Octicons`), `data` and `priority` (defaults `50`)
+The remaining properties
+`tooltip` (default there is no tooltip),
+`text` (default there is no text),
+`html` (default `false`),
+`icon` (default there is no icon),
+`iconset` (defaults to `Octicons`),
+`data`, and
+`priority` (defaults `50`)
 are optional.
 
-The return value of this method shares another method called 
+The `tooltip` option may be a `string` or an `object` that is passed to Atom's
+[TooltipManager](https://atom.io/docs/api/latest/TooltipManager#instance-add)
+
+The return value of this method shares another method called
 `setEnabled(enabled)` to enable or disable the button.
 
 ### `.addSpacer({priority})`
@@ -215,7 +256,7 @@ cleanup when the `tool-bar` is deactivated but your package continues running.
 *   [FontAwesome](http://fortawesome.github.io/Font-Awesome) (`fa`)
 *   [Foundation](http://zurb.com/playground/foundation-icon-fonts-3) (`fi`)
 *   [IcoMoon](https://icomoon.io) (`icomoon`)
-*   [Devicon](http://devicon.fr) (`devicon`)
+*   [Devicon](http://konpa.github.io/devicon/) (`devicon`)
 *   [MaterialDesignIcons](https://materialdesignicons.com/) (`mdi`)
 
 ## Supported commands
@@ -239,7 +280,13 @@ using this one. For all contributions credits are due:
 
 *   [Pascal Bihler](https://github.com/pbihler)
 *   [Nikita Gusakov](https://github.com/nkt)
+*   [Simon AKA simurai](https://github.com/simurai)
 *   Carlos Santos
 *   [Daniel Alejandro Cast](https://github.com/lexcast)
 *   [James Coyle](https://github.com/JamesCoyle)
 *   [Andres Suarez](https://github.com/zertosh)
+*   [Tony Brix](https://github.com/UziTech)
+*   [Gareth McMullin](https://github.com/gsmcmullin)
+*   [Christopher Chedeau](https://github.com/vjeux)
+*   [Paul Brown](https://github.com/PaulBrownMagic)
+*   [Raphael Fetzer](https://github.com/pheraph)

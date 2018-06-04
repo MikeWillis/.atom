@@ -14,54 +14,52 @@
 
 // Mixins -----------------------------------
 .punctuation-mixin(@punctuation:@text2) {
-  .punctuation,
-  .bracket,
-  .brace {
+  .syntax--punctuation,
+  .syntax--bracket,
+  .syntax--brace {
     color: @punctuation;
   }
-  .string .punctuation {
-    .text2();
-  }
 }
 
-.meta {
-  .text2();
-}
-
-.html.elements,
-.entity,
-.tag,
-.function-call {
-  .primary1();
-}
-
-.variable,
-.attribute-name,
-.character.escape {
-  .primary2();
-}
-
-.support {
+.syntax--meta,
+.syntax--support {
   .text1();
 }
 
-.string,
-.constant,
-.storage.type {
+.syntax--html.syntax--elements,
+.syntax--entity,
+.syntax--tag,
+.syntax--function-call {
+  .primary1();
+}
+
+.syntax--variable,
+.syntax--attribute-name,
+.syntax--character.syntax--escape {
+  .primary2();
+}
+
+.syntax--constant,
+.syntax--storage.syntax--type {
   .primary3();
 }
 
-.keyword,
-.storage {
+.syntax--string,
+.syntax--string.syntax--punctuation {
   .secondary1();
+}
+
+.syntax--keyword,
+.syntax--storage {
+  .secondary2();
 }
 
 .punctuation-mixin();
 
-.comment {
+.syntax--comment {
   .text2();
   font-style: italic;
 }
 
-.bold { font-weight: bold; }
-.italic { font-style: italic; }
+.syntax--bold { font-weight: bold; }
+.syntax--italic { font-style: italic; }

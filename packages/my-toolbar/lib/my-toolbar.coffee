@@ -40,6 +40,11 @@ module.exports =
       'tooltip': 'Toggle Sidebar'
       'iconset': 'fa'
 
+    @toolBar.addButton
+      'icon': 'git-compare'
+      'callback': 'remote-ftp:toggle'
+      'tooltip': 'Toggle Remote FTP'
+
     if atom.packages.loadedPackages['minimap']
       @toolBar.addButton
         'icon': 'eye'

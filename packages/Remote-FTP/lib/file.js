@@ -1,70 +1,104 @@
-var __hasProp = {}.hasOwnProperty,
-	__extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-	fs = require('fs-plus'),
-	path = require('path'),
-	Model = require('theorist').Model;
+'use babel';
 
-module.exports = File = (function (parent) {
-	__extends(File, parent);
+import fs from 'fs-plus';
+import path from 'path';
+import { Emitter } from 'event-kit';
 
-	File.properties({
-		parent: null,
-		name: '',
-		client: null,
-		status: 0,
-		size: 0,
-		date: null,
-		type: null
-	});
+class File {
+  constructor(params) {
+    this.emitter = new Emitter();
 
-	File.prototype.accessor('local', function () {
-		if (this.parent)
-			return path.normalize(path.join(this.parent.local, this.name)).replace(/\\/g, '/');
-		throw "File needs to be in a Directory";
-	});
+    this.parent = null;
+    this.name = '';
+    this.client = null;
+    this.isSelected = false;
+    this.status = 0;
+    this.size = 0;
+    this.date = null;
+    this.type = null;
+    this.original = null;
 
-	File.prototype.accessor('remote', function () {
-		if (this.parent)
-			return path.normalize(path.join(this.parent.remote, this.name)).replace(/\\/g, '/');
-		throw "File needs to be in a Directory";
-	});
+    Object.keys(params).forEach((n) => {
+      if (Object.prototype.hasOwnProperty.call(this, n)) {
+        this[n] = params[n];
+      }
+    });
 
-	File.prototype.accessor('root', function () {
-		if (this.parent)
-			return this.parent.root;
-		return this;
-	});
+    const ext = path.extname(this.name);
 
-	function File () {
-		File.__super__.constructor.apply(this, arguments);
+    if (fs.isReadmePath(this.name)) {
+      this.type = 'readme';
+    } else if (fs.isCompressedExtension(ext)) {
+      this.type = 'compressed';
+    } else if (fs.isImageExtension(ext)) {
+      this.type = 'image';
+    } else if (fs.isPdfExtension(ext)) {
+      this.type = 'pdf';
+    } else if (fs.isBinaryExtension(ext)) {
+      this.type = 'binary';
+    } else {
+      this.type = 'text';
+    }
+  }
 
-		if (fs.isReadmePath(this.path))
-			this.type = 'readme';
-		else if (fs.isCompressedExtension(this.path))
-			this.type = 'compressed';
-		else if (fs.isImageExtension(this.path))
-			this.type = 'image';
-		else if (fs.isPdfExtension(this.path))
-			this.type = 'pdf';
-		else if (fs.isBinaryExtension(this.path))
-			this.type = 'binary';
-		else
-			this.type = 'text';
-	}
+  open() {
+    const client = this.root.client;
 
-	File.prototype.open = function () {
-		var self = this,
-			client = self.root.client;
+    client.download(this.remote, false, (err) => {
+      if (err) {
+        atom.notifications.addError(`Remote FTP: ${err}`, {
+          dismissable: false,
+        });
+        return;
+      }
+      atom.workspace.open(this.local);
+    });
+  }
 
-		client.download(self.remote, false, function (err) {
-			if (err) {
-				atom.notifications.addError("Remote FTP: " + err);
-				return;
-			}
-			atom.workspace.open(self.local);
-		});
-	};
+  destroy() {
+    this.emitter.dispose();
+  }
 
-	return File;
+  onChangeSelect(callback) {
+    return this.emitter.on('did-change-select', callback);
+  }
 
-})(Model);
+  get local() {
+    if (this.parent) {
+      let p = path.normalize(path.join(this.parent.local, this.name));
+
+      if (path.sep !== '/') p = p.replace(/\\/g, '/');
+
+      return p;
+    }
+
+    throw new Error('File needs to be in a Directory');
+  }
+
+  get remote() {
+    if (this.parent) {
+      let p = path.normalize(path.join(this.parent.remote, this.name));
+
+      if (path.sep !== '/') p = p.replace(/\\/g, '/');
+
+      return p;
+    }
+
+    throw new Error('File needs to be in a Directory');
+  }
+
+  get root() {
+    if (this.parent) {
+      return this.parent.root;
+    }
+
+    return this;
+  }
+
+  set setIsSelected(value) {
+    this.isSelected = value;
+    this.emitter.emit('did-change-select', value);
+  }
+}
+
+export default File;

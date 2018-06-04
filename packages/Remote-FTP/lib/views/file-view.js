@@ -1,92 +1,146 @@
-var __hasProp = {}.hasOwnProperty,
-	__extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
-	$ = require('atom-space-pen-views').$,
-	View = require('atom-space-pen-views').View;
+'use babel';
 
-module.exports = FileView = (function (parent) {
+import { CompositeDisposable } from 'atom';
+import { $, ScrollView } from 'atom-space-pen-views';
+import { getIconHandler } from '../helpers';
 
-	__extends(FileView, parent);
+class FileView extends ScrollView {
 
-	function FileView (file) {
-		FileView.__super__.constructor.apply(this, arguments);
-	}
+  static content() {
+    return this.li({
+      class: 'file entry list-item',
+      is: 'tree-view-file',
+    }, () => this.span({
+      class: 'name icon',
+      outlet: 'name',
+    }));
+  }
 
-	FileView.content = function () {
-		return this.li({
-			'class': 'file entry list-item'
-		}, function () {
-			return this.span({
-				'class': 'name icon',
-				'outlet': 'name'
-			});
-		}.bind(this));
-	};
+  initialize(file) {
+    super.initialize(file);
 
-	FileView.prototype.initialize = function (file) {
-		//FileView.__super__.initialize.apply(this, arguments);
+    this.subscriptions = new CompositeDisposable();
 
-		var self = this;
+    this.item = file;
+    this.name.text(this.item.name);
+    this.name.attr('data-name', this.item.name);
+    this.name.attr('data-path', this.item.remote);
 
-		self.item = file;
-		self.name.text(self.item.name);
-		self.name.attr('data-name', self.item.name);
-		self.name.attr('data-path', self.item.remote);
+    const addIconToElement = getIconHandler();
 
-		switch (self.item.type) {
-			case 'binary':		self.name.addClass('icon-file-binary'); break;
-			case 'compressed':	self.name.addClass('icon-file-zip'); break;
-			case 'image':		self.name.addClass('icon-file-media'); break;
-			case 'pdf':			self.name.addClass('icon-file-pdf'); break;
-			case 'readme':		self.name.addClass('icon-book'); break;
-			case 'text':		self.name.addClass('icon-file-text'); break;
-		}
+    if (addIconToElement) {
+      const element = this.name[0] || this.name;
+      const path = this.item && this.item.local;
 
-		// Events
-		self.on('mousedown', function (e) {
-			e.stopPropagation();
+      this.iconDisposable = addIconToElement(element, path);
+    } else {
+      switch (this.item.type) {
+        case 'binary':
+          this.name.addClass('icon-file-binary');
+          break;
+        case 'compressed':
+          this.name.addClass('icon-file-zip');
+          break;
+        case 'image':
+          this.name.addClass('icon-file-media');
+          break;
+        case 'pdf':
+          this.name.addClass('icon-file-pdf');
+          break;
+        case 'readme':
+          this.name.addClass('icon-book');
+          break;
+        case 'text':
+          this.name.addClass('icon-file-text');
+          break;
+        default:
+          break;
+      }
+    }
 
-			var view = $(this).view(),
-				button = e.originalEvent ? e.originalEvent.button : 0;
+    this.triggers();
+    this.events();
+  }
 
-			if (!view)
-				return;
+  triggers() {
+    this.item.onChangeSelect(() => {
+      let lastSelected = atom.project['remoteftp-main'].treeView.lastSelected;
 
-			switch (button) {
-				case 2:
-					if (view.is('.selected'))
-						return;
+      if (this.item.isSelected) {
+        lastSelected.push(this);
+        lastSelected = lastSelected.reverse().slice(0, 2).reverse();
+      }
+    });
+  }
 
-				default:
-					if (!e.ctrlKey) {
-						$('.remote-ftp-view .selected').removeClass('selected');
-						$('.remote-ftp-view .entries.list-tree').removeClass('multi-select');
-					} else {
-						$('.remote-ftp-view .entries.list-tree').addClass('multi-select');
-					}
-					view.toggleClass('selected');
-			}
-		});
-		self.on('dblclick', function (e) {
-			e.stopPropagation();
+  events() {
+    this.on('mousedown', (e) => {
+      e.stopPropagation();
 
-			var view = $(this).view();
-			if (!view)
-				return;
+      const view = $(this).view();
+      const button = e.originalEvent ? e.originalEvent.button : 0;
+      const selectKey = process.platform === 'darwin' ? 'metaKey' : 'ctrlKey'; // on mac the select key for multiple files is the meta key
+      const $selected = $('.remote-ftp-view .selected');
 
-			view.open();
-		});
-	};
+      if (!view) return;
 
-	FileView.prototype.destroy = function () {
-		this.item = null;
+      if ((button === 0 || button === 2) && !(button === 2 && $selected.length > 1)) {
+        if (!e[selectKey]) {
+          $selected.removeClass('selected');
+          $('.remote-ftp-view .entries.list-tree').removeClass('multi-select');
+        } else {
+          $('.remote-ftp-view .entries.list-tree').addClass('multi-select');
+        }
+        view.toggleClass('selected');
 
-		this.remove();
-	};
+        this.item.setIsSelected = view.hasClass('selected');
+      }
+    });
 
-	FileView.prototype.open = function () {
-		this.item.open();
-	};
+    this.on('dblclick', (e) => {
+      e.stopPropagation();
 
-	return FileView;
+      const view = $(this).view();
 
-})(View);
+      if (!view) { return; }
+
+      view.open();
+    });
+
+    if (atom.config.get('Remote-FTP.tree.enableDragAndDrop')) {
+      this.setDraggable(true);
+    }
+
+    this.subscriptions.add(
+      atom.config.onDidChange('Remote-FTP.tree.enableDragAndDrop', (values) => {
+        this.setDraggable(values.newValue);
+      }),
+    );
+  }
+
+  setDraggable(bool) {
+    this.attr('draggable', bool);
+  }
+
+  dispose() {
+    this.subscriptions.dispose();
+  }
+
+  destroy() {
+    this.item = null;
+
+    if (this.iconDisposable) {
+      this.iconDisposable.dispose();
+      this.iconDisposable = null;
+    }
+
+    this.remove();
+  }
+
+  open() {
+    this.item.open();
+  }
+
+}
+
+export default FileView;

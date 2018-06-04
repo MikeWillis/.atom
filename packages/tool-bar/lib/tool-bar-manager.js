@@ -1,56 +1,36 @@
-'use babel';
+const ToolBarButtonView = require('./tool-bar-button-view');
+const ToolBarSpacerView = require('./tool-bar-spacer-view');
 
-import ToolBarButtonView from './tool-bar-button-view';
-import ToolBarSpacerView from './tool-bar-spacer-view';
-
-export default class ToolBarManager {
-  constructor (group, toolBar, legacy) {
+module.exports = class ToolBarManager {
+  constructor (group, toolBarView, touchBarManager) {
     this.group = group;
-    this.toolBar = toolBar;
-    this._legacy = legacy;
+    this.toolBarView = toolBarView;
+    this.touchBarManager = touchBarManager;
   }
 
   addButton (options) {
-    const button = new ToolBarButtonView(options);
-    button.group = this.group;
-    this.toolBar.addItem(button);
-    if (this._legacy) {
-      return legacyWrap(button);
-    }
+    const button = new ToolBarButtonView(options, this.group);
+    this.toolBarView.addItem(button);
+    this.touchBarManager.addButton(button);
     return button;
   }
 
   addSpacer (options) {
-    const spacer = new ToolBarSpacerView(options);
-    spacer.group = this.group;
-    this.toolBar.addItem(spacer);
-    if (this._legacy) {
-      return legacyWrap(spacer);
-    }
+    const spacer = new ToolBarSpacerView(options, this.group);
+    this.toolBarView.addItem(spacer);
     return spacer;
   }
 
   removeItems () {
-    if (this.toolBar.items) {
-      this.toolBar.items
+    if (this.toolBarView.items) {
+      this.toolBarView.items
         .filter(item => item.group === this.group)
-        .forEach(item => this.toolBar.removeItem(item));
+        .forEach(item => this.toolBarView.removeItem(item));
+      this.touchBarManager.removeGroup(this.group);
     }
   }
 
   onDidDestroy (callback) {
-    this.toolBar.emitter.on('did-destroy', callback);
+    this.toolBarView.emitter.on('did-destroy', callback);
   }
-}
-
-function legacyWrap (view) {
-  const $ = require('jquery');
-  const wrapped = $(view.element);
-  ['setEnabled', 'destroy'].forEach(name => {
-    if (typeof view[name] === 'function') {
-      wrapped[name] = (...args) => view[name](...args);
-    }
-  });
-  wrapped.element = view.element;
-  return wrapped;
-}
+};

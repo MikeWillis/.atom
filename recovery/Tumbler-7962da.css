@@ -1,0 +1,49 @@
+@media screen and (min-width: 200px) {
+   #canvas {
+      width: 350px;
+      padding: 20px;
+   }
+   .label {
+      width: 310px;
+      height: 500px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 0px !important; /* this gets rid of the rounded corners */
+   }
+
+	#optionPanels { z-index: 4; }
+
+	#nextPrevious { z-index: 3; }
+	#optionPanels .fullPanel .colorSwatches li {
+		height: 30px;
+		width: 30px;
+      padding: 0px;
+      margin: 4px;
+	}
+	#optionPanels .mobilePanel .colorSwatches li {
+		height: 30px;
+		width: 30px;
+      padding: 0px;
+      margin: 8px;
+	}
+	#optionPanels .fullPanel .colorSwatches li {
+		height: 30px;
+      width: 30px;
+	}
+   .backgroundColorSecondary { display: none; }
+
+   .label .design, .label .designText, .label .monogramLetter1, .label .monogramLetter2, .label .monogramLetter3, .label .textLine1, .label .textLine2, .label .textLine3 {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+   }
+   .optionLine.designText { display: none; }
+   .label .designText, .label .monogramLetter1, .label .monogramLetter2, .label .monogramLetter3, .label .textLine1, .label .textLine2, .label .textLine3 { display: none; color: #fff; }
+   .label .designText, .label .textLine1, .label .textLine2, .label .textLine3 {
+      display: block;
+      width: 100%;
+      text-align: center;
+   }
+
+   .label .backgroundColor { position: absolute; height: 100%; width: 100%; top: 0px; }
+}
