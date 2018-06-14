@@ -14,8 +14,9 @@ export default {
 
   config,
   client: null,
+  coreTreeView: null,
   treeView: null,
-  statusBar: null,
+  statusBarTile: null,
   statusBarView: null,
   subscriptions: null,
 
@@ -28,10 +29,9 @@ export default {
 
     this.config = config;
     this.client = new Client();
-    atom.project['remoteftp-main'] = this; // change remoteftp to object containing client and main?
+    atom.project.remoteftpMain = this; // change remoteftp to object containing client and main?
     atom.project.remoteftp = this.client;
-    this.treeView = new TreeView();
-    this.statusBarView = new StatusBarView();
+    this.treeView = new TreeView(this.storage);
 
     this.subscriptions = new CompositeDisposable();
     this.subscriptions.add(
@@ -48,18 +48,36 @@ export default {
         atom.commands.dispatch(atom.views.getView(atom.workspace), 'remote-ftp:connect');
       }),
 
-      atom.config.onDidChange('Remote-FTP.statusbar.enable', () => {
-        this.setStatusbar();
+      atom.workspace.paneContainers.left.onDidChangeActivePaneItem((activeItem) => {
+        if (this.treeView !== activeItem) return;
+
+        this.storage.data.options.treeViewSide = 'left';
       }),
 
-      atom.config.onDidChange('Remote-FTP.statusbar.position', () => {
-        this.setStatusbar();
+      atom.workspace.paneContainers.right.onDidChangeActivePaneItem((activeItem) => {
+        if (this.treeView !== activeItem) return;
+
+        this.storage.data.options.treeViewSide = 'right';
       }),
 
-      atom.config.onDidChange('Remote-FTP.statusbar.priority', () => {
-        this.setStatusbar();
+      atom.workspace.paneContainers.bottom.onDidChangeActivePaneItem((activeItem) => {
+        if (this.treeView !== activeItem) return;
+
+        this.storage.data.options.treeViewSide = 'bottom';
+      }),
+
+      atom.config.onDidChange('remote-ftp.tree.enableDragAndDrop', (value) => {
+        if (value.newValue) {
+          this.createTreeViewEvents();
+        } else {
+          this.dropTreeViewEvents();
+        }
       }),
     );
+
+    if (atom.config.get('remote-ftp.tree.enableDragAndDrop')) {
+      this.createTreeViewEvents();
+    }
 
     this.client.onDidConnected(() => {
       this.treeView.root.name.attr('data-name', Path.basename(this.client.root.remote));
@@ -77,11 +95,13 @@ export default {
         const conf = new File(this.client.getConfigPath());
 
         conf.exists().then((exists) => {
-          if (exists && atom.config.get('Remote-FTP.tree.showViewOnStartup')) {
+          if (exists && atom.config.get('remote-ftp.tree.showViewOnStartup')) {
             this.treeView.attach();
           }
         }).catch((error) => {
-          atom.notifications.addWarning(error.reason);
+          const err = (error.reason) ? error.reason : error.message;
+
+          atom.notifications.addWarning(err);
         });
       }, 0);
     }
@@ -90,18 +110,78 @@ export default {
     initCommands();
   },
 
+  createTreeViewEvents() {
+    const coreTreeViewElemDragStart = (e) => {
+      const target = e.target.querySelector('.name');
+      const localPaths = {
+        fullPath: target.getAttribute('data-path'),
+        name: target.getAttribute('data-name'),
+      };
+
+      e.dataTransfer.setData('localPaths', JSON.stringify(localPaths));
+      e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const coreTreeViewElemDrop = (e) => {
+      const pathInfos = e.dataTransfer.getData('pathInfos');
+
+      if (pathInfos.length > 0) {
+        const remotePath = JSON.parse(pathInfos);
+        const newPathInfo = e.target.querySelector('span[data-path]').getAttribute('data-path');
+        const destPath = Path.join(newPathInfo, remotePath.name);
+
+        if (Object.keys(remotePath).length === 0) {
+          console.warn('Empty ', remotePath);
+        }
+
+        this.client.downloadTo(remotePath.fullPath, destPath, true, (err) => {
+          if (err) {
+            console.warn(err);
+          }
+        });
+      }
+    };
+
+    this.coreTreeViewEvents = {
+      coreTreeViewElemDragStart,
+      coreTreeViewElemDrop,
+    };
+
+    atom.packages.activatePackage('tree-view').then((treeView) => {
+      this.coreTreeView = treeView.mainModule.getTreeViewInstance();
+
+      if (typeof this.coreTreeView.element === 'undefined') {
+        return;
+      }
+
+      this.coreTreeView.element.addEventListener('dragstart', this.coreTreeViewEvents.coreTreeViewElemDragStart);
+      this.coreTreeView.element.addEventListener('drop', this.coreTreeViewEvents.coreTreeViewElemDrop);
+    });
+  },
+
+  dropTreeViewEvents() {
+    if (this.coreTreeView && this.coreTreeView.element && this.coreTreeViewEvents) {
+      this.coreTreeView.element.removeEventListener('dragstart', this.coreTreeViewEvents.coreTreeViewElemDragStart);
+      this.coreTreeView.element.removeEventListener('drop', this.coreTreeViewEvents.coreTreeViewElemDrop);
+
+      delete this.coreTreeViewEvents;
+      this.coreTreeView = null;
+    }
+  },
+
   deactivate() {
     this.subscriptions.dispose();
-    this.statusBar.activeBar.destroy();
-    this.statusBarView.dispose();
+    this.destroyStatusBar();
 
     if (this.client) this.client.disconnect();
     if (this.treeView) this.treeView.detach();
 
+    this.dropTreeViewEvents();
+
     this.client = null;
     this.treeView = null;
 
-    delete atom.project['remoteftp-main'];
+    delete atom.project.remoteftpMain;
     delete atom.project.remoteftp;
   },
 
@@ -109,9 +189,9 @@ export default {
     if (!hasProject()) return;
 
     if (!this.storage.data.options.autosave) return;
-    if (atom.config.get('Remote-FTP.connector.autoUploadOnSave') === 'never') return;
+    if (atom.config.get('remote-ftp.connector.autoUploadOnSave') === 'never') return;
 
-    if (!this.client.isConnected() && atom.config.get('Remote-FTP.connector.autoUploadOnSave') !== 'always') return;
+    if (!this.client.isConnected() && atom.config.get('remote-ftp.connector.autoUploadOnSave') !== 'always') return;
 
     const local = text.path;
 
@@ -137,7 +217,7 @@ export default {
     const uploadedItem = atom.workspace.getActiveTextEditor().getFileName();
 
     this.client.upload(local, (err) => {
-      if (atom.config.get('Remote-FTP.notifications.enableTransfer')) {
+      if (atom.config.get('remote-ftp.notifications.enableTransfer')) {
         if (err) {
           atom.notifications.addError(`Remote FTP: ${uploadedItem} could not upload.`);
         } else {
@@ -158,32 +238,55 @@ export default {
     });
   },
 
-  setStatusbar() {
-    this.destroyStatusBar();
-    if (!atom.config.get('Remote-FTP.statusbar.enable')) return;
+  setStatusbar(statusBar) {
+    this.destroyStatusBar(statusBar);
+
+    this.subscriptions.add(
+      atom.config.onDidChange('remote-ftp.statusbar.enable', () => {
+        this.setStatusbar(statusBar);
+      }),
+    );
+
+    if (!atom.config.get('remote-ftp.statusbar.enable')) return;
+
+    this.statusBarView = new StatusBarView();
 
     const options = {
       item: this.statusBarView,
-      priority: atom.config.get('Remote-FTP.statusbar.priority'),
+      priority: atom.config.get('remote-ftp.statusbar.priority'),
     };
 
-    if (atom.config.get('Remote-FTP.statusbar.position') === 'left') {
-      this.statusBar.activeBar = this.statusBar.addLeftTile(options);
+    if (atom.config.get('remote-ftp.statusbar.position') === 'left') {
+      this.statusBarTile = statusBar.addLeftTile(options);
     } else {
-      this.statusBar.activeBar = this.statusBar.addRightTile(options);
+      this.statusBarTile = statusBar.addRightTile(options);
     }
+
+    this.subscriptions.add(
+      atom.config.onDidChange('remote-ftp.statusbar.position', () => {
+        this.setStatusbar(statusBar);
+      }),
+
+      atom.config.onDidChange('remote-ftp.statusbar.priority', () => {
+        this.setStatusbar(statusBar);
+      }),
+    );
   },
 
   destroyStatusBar() {
-    if (this.statusBar.activeBar) {
-      this.statusBar.activeBar.destroy();
-      this.statusBar.activeBar = null;
+    if (this.statusBarTile) {
+      this.statusBarTile.destroy();
+      this.statusBarTile = null;
+    }
+
+    if (this.statusBarView) {
+      this.statusBarView.dispose();
+      this.statusBarView = null;
     }
   },
 
   consumeStatusBar(statusBar) {
-    this.statusBar = statusBar;
-    this.setStatusbar();
+    this.setStatusbar(statusBar);
   },
 
 };

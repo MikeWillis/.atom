@@ -13,7 +13,7 @@ export default class StatusBarViewInner extends View {
       }, () => {
         this.div({}, () => {
           this.span({}, () => {
-            this.text('Remote-FTP');
+            this.text('Remote');
           });
         });
 
@@ -51,7 +51,7 @@ export default class StatusBarViewInner extends View {
   }
 
   attached() {
-    const autosave = atom.project['remoteftp-main'].storage.data.options.autosave;
+    const autosave = atom.project.remoteftpMain.storage.data.options.autosave;
 
     this.autoSave.prop('checked', autosave);
     this.events();

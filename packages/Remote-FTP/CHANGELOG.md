@@ -2,6 +2,67 @@
 
 ## [Unreleased]
 
+## [2.2.0] - 2018-05-19
+
+## Changed
++ Supported .cson config file [#1140](https://github.com/icetee/remote-ftp/issues/1140)
++ Remove `resize-handle` methods
++ Adapt to new tree-view design
++ Supported Drag & Drop download, upload
++ Add `.ftpconfig.cson` name to ftpignore
+
+## Fixed
++ Keypress up/down move in folder
++ Improve the dock pane visibility [#1137](https://github.com/icetee/remote-ftp/issues/1137)
++ Asterisk problem solved [#1062](https://github.com/icetee/remote-ftp/issues/1062)
+
+## [2.1.4] - 2018-01-06
+
+## Changed
++ Change default SFTP port
++ Add `isGenericUploadError` in notifications [#1083](https://github.com/icetee/remote-ftp/pull/1083)
+
+## Fixed
++ Remove “Could not get project path.” notification [#860](https://github.com/icetee/remote-ftp/issues/860)
++ Uncaught TypeError: Cannot read property 'emit' of undefined [#1100](https://github.com/icetee/remote-ftp/issues/1100)
+
+## [2.1.2] - 2017-12-13
+
+## Fixed
++ Supported APM package name conversion [#1066](https://github.com/icetee/remote-ftp/issues/1066) [#1081](https://github.com/icetee/remote-ftp/issues/1081)
+
+## [2.1.1] - 2017-12-10
+
+## Fixed
++ Fix .ftpignore from being loaded [#972](https://github.com/icetee/remote-ftp/issues/972)
++ Fix "Failed to activate" destroy is undefined [#1077](https://github.com/icetee/remote-ftp/issues/1077)
+
+## Changed
++ Remove bad notifications if use ignore
++ Marked item if included in ignores
++ Upgrade ignore package
+
+## [2.1.0] - 2017-12-06 🎅🏻
+
+## Featured
++ Supported SFTP permissions change
++ Save Remote TreeView location [#1068](https://github.com/icetee/remote-ftp/issues/1068)
+
+## Changed
++ Change global variable name atom.project['remoteftp-main'] -> atom.project.remoteftpMain
++ Remove Use Dock Integration options
++ Remove old panel attach, only usable Dock Pane method
++ Remove semver
++ Remove showOnRightSide deprecated change event
++ Remove useDockIntegration deprecated change event
++ Remove hideLocalWhenDisplayed deprecated event
+
+## Fixed
++ Drop checkFeatures and add forcePasv default value [#1060](https://github.com/icetee/remote-ftp/issues/1060)
++ Fix bug [#1069](https://github.com/icetee/remote-ftp/issues/1069) and fix download onceConnected call
++ Fix force toggled TreeView
++ Fix crash change "Enable Drag and Drop" [#1075](https://github.com/icetee/remote-ftp/issues/1075)
+
 ## [2.0.0] - 2017-11-20
 
 ## Changed

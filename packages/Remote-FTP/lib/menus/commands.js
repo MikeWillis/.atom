@@ -6,6 +6,9 @@ import { $ } from 'atom-space-pen-views';
 import {
   hasProject,
   getObject,
+  checkIgnoreRemote,
+  checkIgnoreLocal,
+  checkPaths,
 } from '../helpers';
 
 import DirectoryView from '../views/directory-view';
@@ -17,7 +20,7 @@ import NavigateTo from '../dialogs/navigate-to-dialog';
 
 const init = () => {
   const client = atom.project.remoteftp;
-  const remoteftp = atom.project['remoteftp-main'];
+  const remoteftp = atom.project.remoteftpMain;
 
   const getRemotes = (errMessage) => {
     const remotes = remoteftp.treeView.getSelected();
@@ -114,7 +117,7 @@ const init = () => {
       command() {
         if (!hasProject()) return;
 
-        const fileContents = ['.ftpconfig', '.ftpignore', 'id_rsa', '.DS_Store', '.git'];
+        const fileContents = ['.ftpconfig', '.ftpconfig.cson', '.ftpignore', 'id_rsa', '.DS_Store', '.git'];
         const ftpIgnorePath = client.getFilePath('./.ftpignore');
 
         FS.writeFile(ftpIgnorePath, fileContents.join('\n'), (err) => {
@@ -143,19 +146,7 @@ const init = () => {
             return;
           }
 
-          let hideFTPTreeView = false;
-          if (!remoteftp.treeView.isVisible()) {
-            remoteftp.treeView.toggle();
-            hideFTPTreeView = true;
-          }
-
           client.connect();
-
-          if (hideFTPTreeView) {
-            atom.project.remoteftp.emitter.once('connected', () => {
-              remoteftp.treeView.toggle();
-            });
-          }
         });
       },
     },
@@ -370,13 +361,11 @@ const init = () => {
         }
 
         if (!client.isConnected()) {
-           console.log("connecting");
           const viewWorkspace = atom.views.getView(atom.workspace);
 
           atom.commands.dispatch(viewWorkspace, 'remote-ftp:connect');
 
           atom.project.remoteftp.onceConnected(() => {
-             console.log("connection complete");
             atom.commands.dispatch(viewWorkspace, 'remote-ftp:download-selected-local');
           });
 
@@ -393,10 +382,10 @@ const init = () => {
         $treeSelected.each((key, elem) => {
           const path = elem.getPath ? elem.getPath() : '';
           const localPath = path.replace(client.root.local, '');
-          const remotePath = Path.posix.normalize(atom.project.remoteftp.root.remote + localPath.replace(/\\/g, '/'));
-          console.log("remotePath = '" + remotePath + "'");
+          const remotePath = Path.posix.normalize((atom.project.remoteftp.root.remote + localPath).replace(/\\/g, '/'));
+
           client.download(remotePath, true, () => {
-            if (atom.config.get('Remote-FTP.notifications.enableTransfer')) {
+            if (atom.config.get('remote-ftp.notifications.enableTransfer')) {
               // TODO: check if any errors were thrown, indicating an unsuccessful transfer
               attemptedTransfers++;
               successfulTransfers++;
@@ -404,7 +393,7 @@ const init = () => {
           });
         });
 
-        if (atom.config.get('Remote-FTP.notifications.enableTransfer')) {
+        if (atom.config.get('remote-ftp.notifications.enableTransfer')) {
           const waitingForTransfers = setInterval(() => {
             if (attemptedTransfers === requestedTransfers) {
               // we're done waiting
@@ -443,7 +432,7 @@ const init = () => {
           return this.getPath ? this.getPath() : '';
         }).get();
 
-        const enableTransfer = atom.config.get('Remote-FTP.notifications.enableTransfer');
+        const enableTransfer = atom.config.get('remote-ftp.notifications.enableTransfer');
 
         let successfulTransfers;
         let attemptedTransfers;
@@ -479,7 +468,7 @@ const init = () => {
           });
         });
 
-        if (atom.config.get('Remote-FTP.notifications.enableTransfer')) {
+        if (atom.config.get('remote-ftp.notifications.enableTransfer')) {
           const waitingForTransfers = setInterval(() => {
             if (attemptedTransfers === locals.length) {
               // we're done waiting
@@ -529,7 +518,9 @@ const init = () => {
       enabled: true,
       command() {
         const remotes = remoteftp.treeView.getSelected();
-        remotes.forEach((view) => {
+        const filteredRemotes = remotes.filter(checkIgnoreRemote);
+
+        filteredRemotes.forEach((view) => {
           if (!view) return;
 
           // checking to see if we're working with a file
@@ -591,11 +582,10 @@ const init = () => {
           return;
         }
 
-        const locals = $('.tree-view .selected').map(function MAP() {
-          return this.getPath ? this.getPath() : '';
-        }).get();
+        const locals = $('.tree-view .selected').map(checkPaths).get();
+        const filteredRemotes = locals.filter(checkIgnoreLocal);
 
-        locals.forEach((local) => {
+        filteredRemotes.forEach((local) => {
           if (!local) return;
 
           // checking to see if we're working with a file

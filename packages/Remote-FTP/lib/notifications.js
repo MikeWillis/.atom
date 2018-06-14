@@ -70,21 +70,34 @@ export const isPermissionDenied = (path, dismissable = false) => {
 
 export const isNoChangeGroup = (response, dismissable = false) => {
   atom.notifications.addWarning('Remote FTP: Group privileges was not changed.', {
-    detail: response[0].message,
+    detail: response.message,
     dismissable,
   });
 };
 
 export const isNoChangeOwner = (response, dismissable = false) => {
-  console.error(response);
   atom.notifications.addWarning('Remote FTP: Owner privileges was not changed.', {
-    detail: response[0].message,
+    detail: response.message,
+    dismissable,
+  });
+};
+
+export const isNoChangeOwnerAndGroup = (response, dismissable = false) => {
+  atom.notifications.addWarning('Remote FTP: Owner and Group privileges was not changed.', {
+    detail: response.message,
     dismissable,
   });
 };
 
 export const isNotImplemented = (detail, dismissable = false) => {
-  atom.notifications.addInfo('Remote-FTP: Not implemented.', {
+  atom.notifications.addInfo('Remote FTP: Not implemented.', {
+    detail,
+    dismissable,
+  });
+};
+
+export const isGenericUploadError = (detail, dismissable = false) => {
+  atom.notifications.addError('Remote FTP: Upload Error.', {
     detail,
     dismissable,
   });

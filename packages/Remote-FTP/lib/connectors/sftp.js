@@ -4,7 +4,8 @@ import FS from 'fs-plus';
 import Path from 'path';
 import SSH2 from 'ssh2';
 import Connector from '../connector';
-import { traverseTree } from '../helpers';
+import { isGenericUploadError } from '../notifications';
+import { traverseTree, statsToPermissions } from '../helpers';
 
 class ConnectorSFTP extends Connector {
   constructor(...args) {
@@ -224,6 +225,9 @@ class ConnectorSFTP extends Connector {
                   name: fname,
                   type: stats.isFile() ? 'f' : 'd',
                   size: stats.size,
+                  group: stats.gid,
+                  owner: stats.uid,
+                  rights: statsToPermissions(stats),
                   date: new Date(),
                 };
 
@@ -241,6 +245,9 @@ class ConnectorSFTP extends Connector {
               name: Path.join(listPath, item.filename).replace(/\\/g, '/'),
               type: item.attrs.isFile() ? 'f' : 'd',
               size: item.attrs.size,
+              group: item.attrs.gid,
+              owner: item.attrs.uid,
+              rights: statsToPermissions(item.attrs),
               date: new Date(),
             };
 
@@ -353,6 +360,100 @@ class ConnectorSFTP extends Connector {
     });
   }
 
+  getTo(remotePath, targetPath, recursive, completed, progress, symlinkPath) {
+    const self = this;
+    const local = targetPath;
+
+    if (!self.isConnected()) {
+      if (typeof completed === 'function') completed(...['Not connected']);
+    }
+
+    self.sftp.lstat(remotePath, (err, stats) => {
+      if (err) {
+        if (typeof completed === 'function') completed(...[err]);
+        return;
+      }
+
+      if (stats.isSymbolicLink()) {
+        self.sftp.realpath(remotePath, (realPatherr, target) => {
+          if (realPatherr) {
+            if (typeof completed === 'function') completed(...[realPatherr]);
+            return;
+          }
+
+          self.get(target, recursive, completed, progress, remotePath);
+        });
+      } else if (stats.isFile()) {
+        // File
+        FS.makeTreeSync(Path.dirname(local));
+
+        self.sftp.fastGet(remotePath, local, {
+          step(read, chunk, size) {
+            if (typeof progress === 'function') { progress(...[read / size]); }
+          },
+        }, (fastGetErr) => {
+          if (typeof completed === 'function') { completed(...[fastGetErr]); }
+        });
+      } else {
+        // Directory
+        self.list(remotePath, recursive, (listErr, list) => {
+          list.unshift({ name: remotePath, type: 'd' });
+
+          list.forEach((item) => {
+            item.depth = item.name.replace(/^\/+/, '').replace(/\/+$/).split('/').length;
+          });
+
+          list.sort((a, b) => {
+            if (a.depth === b.depth) return 0;
+            return a.depth > b.depth ? 1 : -1;
+          });
+
+          let error = null;
+          const total = list.length;
+          let i = -1;
+          const e = () => {
+            if (typeof completed === 'function') { completed(...[error, list]); }
+          };
+
+          const n = () => {
+            ++i;
+            if (typeof progress === 'function') { progress(...[i / total]); }
+
+            const item = list.shift();
+
+            if (typeof item === 'undefined' || item === null) { return e(); }
+
+            const toTarget = Path.dirname(targetPath.replace(self.client.getProjectPath(), ''));
+            const toLocal = self.client.toLocal(item.name, toTarget);
+
+            if (item.type === 'd' || item.type === 'l') {
+              // mkdirp(toLocal, function (err) {
+              FS.makeTree(toLocal, (treeErr) => {
+                if (treeErr) { error = treeErr; }
+
+                return n();
+              });
+            } else {
+              self.sftp.fastGet(item.name, toLocal, {
+                step(read, chunk, size) {
+                  if (typeof progress === 'function') {
+                    progress(...[(i / total) + (read / size / total)]);
+                  }
+                },
+              }, (fastGetErr) => {
+                if (fastGetErr) { error = fastGetErr; }
+
+                return n();
+              });
+            }
+            return true;
+          };
+          n();
+        });
+      }
+    });
+  }
+
   putDirect(file) {
     const self = this;
     const fileObject = Object.assign({
@@ -404,9 +505,7 @@ class ConnectorSFTP extends Connector {
             if (dirErr) {
               const error = writeErr.message || dirErr;
 
-              atom.notifications.addError(`Remote FTP: Upload Error ${error}`, {
-                dismissable: false,
-              });
+              isGenericUploadError(error);
 
               return dirErr;
             }
@@ -415,12 +514,11 @@ class ConnectorSFTP extends Connector {
 
             return true;
           });
+        } else if (err && Object.prototype.hasOwnProperty.call(err, 'message')) {
+          isGenericUploadError(err.message);
         } else {
-          const error = err.message || writeErr;
-
-          atom.notifications.addError(`Remote FTP: Upload Error ${error}`, {
-            dismissable: false,
-          });
+          console.error(writeErr); // Useful for debugging
+          isGenericUploadError(writeErr);
         }
       });
 
@@ -436,6 +534,68 @@ class ConnectorSFTP extends Connector {
     };
 
     self.sftp.stat(fileObject.remotePath, stats);
+  }
+
+  putTo(sourcePath, targetPath, completed, progress) {
+    if (this.isConnected()) {
+      if (FS.isFileSync(sourcePath)) {
+        const e = (err) => {
+          if (typeof completed === 'function') {
+            completed(...[err || null, [{ name: sourcePath, type: 'f' }]]);
+          }
+        };
+
+        this.putDirect({
+          localPath: sourcePath,
+          remotePath: targetPath,
+          progress,
+          e,
+        });
+      } else {
+        traverseTree(sourcePath, (list) => {
+          this.mkdir(targetPath, true, () => {
+            let i = -1;
+            const total = list.length;
+            const e = (error) => {
+              if (typeof completed === 'function') { completed(...[error, list]); }
+            };
+            const n = (error) => {
+              if (++i >= list.length) return e(error);
+
+              const item = list[i];
+              const toRemote = this.client.toRemote(item.name);
+
+              if (item.type === 'd' || item.type === 'l') {
+                this.sftp.mkdir(toRemote, {}, (travDirerr) => {
+                  if (travDirerr) { error = travDirerr; }
+                  return n();
+                });
+              } else {
+                this.putDirect({
+                  localPath: item.name,
+                  remotePath: toRemote,
+                  progress,
+                  i,
+                  total,
+                  e(putErr) {
+                    if (putErr) error = putErr;
+
+                    return n(error);
+                  },
+                });
+              }
+
+              return true;
+            };
+            return n();
+          });
+        });
+      }
+    } else if (typeof completed === 'function') {
+      completed(...['Not connected']);
+    }
+
+    return this;
   }
 
   put(path, completed, progress) {
@@ -662,6 +822,26 @@ class ConnectorSFTP extends Connector {
     }
 
     return self;
+  }
+
+  chmod(path, mode, completed = () => {}) {
+    const self = this;
+
+    if (self.isConnected()) {
+      self.sftp.chmod(path, parseInt(mode, 8), completed);
+    } else if (typeof completed === 'function') {
+      completed(...['Not connected']);
+    }
+  }
+
+  chown(path, uid, gid, completed = () => {}) {
+    const self = this;
+
+    if (self.isConnected()) {
+      self.sftp.chown(path, uid, gid, completed);
+    } else if (typeof completed === 'function') {
+      completed(...['Not connected']);
+    }
   }
 }
 

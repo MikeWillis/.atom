@@ -22,14 +22,6 @@
       "source.json": [
         "ftpconfig"
       ]
-    disabledPackages: [
-      "linter-csslint"
-      "linter-ui-default"
-      "linter-php"
-      "linter-jshint"
-      "linter-htmlhint"
-      "linter"
-    ]
     ignoredNames: [
       "php-integrator-base"
       "linter"
@@ -73,6 +65,14 @@
   "project-manager":
     showPath: false
     sortBy: "title"
+  "remote-ftp":
+    connector:
+      autoUploadOnSave: "never"
+    notifications:
+      enableTransfer: true
+    statusbar:
+      enable: true
+      position: "right"
   tabs:
     addNewTabsAtEnd: true
   "tool-bar":

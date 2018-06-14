@@ -5,7 +5,6 @@ import { $, ScrollView } from 'atom-space-pen-views';
 import { getIconHandler } from '../helpers';
 
 class FileView extends ScrollView {
-
   static content() {
     return this.li({
       class: 'file entry list-item',
@@ -25,6 +24,10 @@ class FileView extends ScrollView {
     this.name.text(this.item.name);
     this.name.attr('data-name', this.item.name);
     this.name.attr('data-path', this.item.remote);
+
+    if (atom.project.remoteftp.checkIgnore(this.item.remote)) {
+      this.addClass('status-ignored');
+    }
 
     const addIconToElement = getIconHandler();
 
@@ -64,7 +67,7 @@ class FileView extends ScrollView {
 
   triggers() {
     this.item.onChangeSelect(() => {
-      let lastSelected = atom.project['remoteftp-main'].treeView.lastSelected;
+      let lastSelected = atom.project.remoteftpMain.treeView.lastSelected;
 
       if (this.item.isSelected) {
         lastSelected.push(this);
@@ -107,12 +110,12 @@ class FileView extends ScrollView {
       view.open();
     });
 
-    if (atom.config.get('Remote-FTP.tree.enableDragAndDrop')) {
+    if (atom.config.get('remote-ftp.tree.enableDragAndDrop')) {
       this.setDraggable(true);
     }
 
     this.subscriptions.add(
-      atom.config.onDidChange('Remote-FTP.tree.enableDragAndDrop', (values) => {
+      atom.config.onDidChange('remote-ftp.tree.enableDragAndDrop', (values) => {
         this.setDraggable(values.newValue);
       }),
     );
@@ -140,7 +143,6 @@ class FileView extends ScrollView {
   open() {
     this.item.open();
   }
-
 }
 
 export default FileView;

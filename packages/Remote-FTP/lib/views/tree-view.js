@@ -1,89 +1,23 @@
 'use babel';
 
-import semver from 'semver';
+import { CompositeDisposable } from 'event-kit';
 import { $, ScrollView } from 'atom-space-pen-views';
 import {
-  getObject,
-  resizeCursor,
   elapsedTime,
   resolveTree,
   getSelectedTree,
 } from '../helpers';
 import DirectoryView from './directory-view';
 
-let hideLocalTreeError = false;
-
-function hideLocalTree() {
-  const treeView = getObject({
-    obj: atom.packages.loadedPackages,
-    keys: ['tree-view', 'mainModule', 'treeView'],
-  });
-
-  if (treeView && typeof treeView.detach === 'function') { // Fix for Issue 433 ( workaround to stop throwing error)
-    try {
-      treeView.detach();
-    } catch (e) {
-      if (hideLocalTreeError === false) {
-        atom.notifications.addWarning('Remote FTP: See issue #433', {
-          dismissable: false,
-        });
-        hideLocalTreeError = true;
-      }
-    }
-  }
-}
-
-function showLocalTree() {
-  const treeView = getObject({
-    obj: atom.packages.loadedPackages,
-    keys: ['tree-view', 'mainModule', 'treeView'],
-  });
-  if (treeView && typeof treeView.detach === 'function') treeView.attach();
-}
-
 class TreeView extends ScrollView {
-
   static content() {
     return this.div({
-      class: 'remote-ftp-view ftptree-view-resizer tool-panel',
-      'data-show-on-right-side': atom.config.get('tree-view.showOnRightSide'),
-      'data-use-dock-integration': atom.config.get('Remote-FTP.tree.useDockIntegration'),
+      class: 'remote-ftp-view tool-panel',
     }, () => {
-      this.ul({
-        class: 'list-inline tab-bar inset-panel show',
-        is: 'atom-tabs',
+      this.ol({
+        class: 'ftptree-view full-menu list-tree has-collapsable-children focusable-panel',
         tabindex: -1,
-        location: 'left',
-        outlet: 'tabPanel',
-      }, () => {
-        this.li({
-          class: 'tab',
-          is: 'tabs-tab',
-          'data-type': 'TreeView',
-        }, () => {
-          this.div({
-            class: 'title',
-          }, () => {
-            this.text('Remote');
-          });
-        });
-      });
-
-      this.div({
-        class: 'scroller',
-        outlet: 'scroller',
-      }, () => {
-        this.ol({
-          class: 'ftptree-view full-menu list-tree has-collapsable-children focusable-panel',
-          tabindex: -1,
-          outlet: 'list',
-        });
-      });
-
-      this.div({
-        class: 'resize-handle',
-        outlet: 'horizontalResize',
-        style: `cursor:${resizeCursor}`, // platform specific cursor
+        outlet: 'list',
       });
 
       this.div({
@@ -96,14 +30,17 @@ class TreeView extends ScrollView {
           tabindex: -1,
           outlet: 'progress',
         });
+
         this.ul({
           class: 'list',
           tabindex: -1,
           outlet: 'debug',
         });
-        return this.div({
-          class: 'resize-handle',
-          outlet: 'verticalResize',
+
+        this.span({
+          class: 'remote-ftp-info icon icon-unfold',
+          tabindex: -1,
+          outlet: 'info',
         });
       });
 
@@ -115,8 +52,11 @@ class TreeView extends ScrollView {
     });
   }
 
-  initialize(...args) {
-    super.initialize(...args);
+  initialize(storage) {
+    super.initialize(storage);
+
+    this.subscriptions = new CompositeDisposable();
+    this.storage = storage;
 
     // Supported for old API
     this.getSelected = getSelectedTree;
@@ -147,48 +87,15 @@ class TreeView extends ScrollView {
     this.lastSelected = [];
 
     // Events
-    atom.config.onDidChange('tree-view.showOnRightSide', () => {
-      if (this.isVisible()) {
-        setTimeout(() => {
-          this.detach();
-          this.attach();
-        }, 1);
-      }
-    });
-
-    atom.config.onDidChange('Remote-FTP.tree.hideLocalWhenDisplayed', (values) => {
-      if (values.newValue) {
-        if (this.isVisible()) {
-          hideLocalTree();
+    this.subscriptions.add(
+      atom.config.onDidChange('remote-ftp.tree.enableDragAndDrop', (value) => {
+        if (value.newValue) {
+          this.createDragAndDrops();
+        } else {
+          this.disposeDragAndDrops();
         }
-      } else if (this.isVisible()) {
-        this.detach();
-        showLocalTree();
-        this.attach();
-      } else {
-        showLocalTree();
-      }
-    });
-
-    atom.config.onDidChange('Remote-FTP.tree.useDockIntegration', () => {
-      if (typeof atom.workspace.getRightDock === 'undefined') {
-        atom.notifications.addWarning('Your editor is <b>deprecated</b>.<br />This option is available only >=1.17.0 version.');
-        atom.config.set('Remote-FTP.tree.useDockIntegration', 'false');
-      } else if (this.isVisible()) {
-        setTimeout(() => {
-          this.detach();
-          this.attach();
-        }, 1);
-      }
-    });
-
-    atom.config.onDidChange('Remote-FTP.tree.enableDragAndDrop', (value) => {
-      if (value.newValue) {
-        this.createDragAndDrops();
-      } else {
-        this.disposeDragAndDrops();
-      }
-    });
+      }),
+    );
 
     atom.project.remoteftp.onDidDebug((msg) => {
       this.debug.prepend(`<li>${msg}</li>`);
@@ -261,10 +168,10 @@ class TreeView extends ScrollView {
       this.toggle();
     });
 
-    this.horizontalResize.on('dblclick', (e) => { this.resizeToFitContent(e); });
-    this.horizontalResize.on('mousedown', (e) => { this.resizeHorizontalStarted(e); });
-    this.verticalResize.on('mousedown', (e) => { this.resizeVerticalStarted(e); });
+    this.info.on('click', (e) => { this.toggleInfo(e); });
+
     this.list.on('keydown', (e) => { this.remoteKeyboardNavigation(e); });
+
     this.root.entries.on('click', 'li.entry', (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -292,55 +199,65 @@ class TreeView extends ScrollView {
     });
 
     this.getTitle = () => 'Remote';
+
+    if (this.storage.data.options.treeViewShow) {
+      this.attach();
+    }
+  }
+
+  serialize() {
+    return this.storage.data;
+  }
+
+  toggleInfo() {
+    this.queue.toggleClass('active');
+
+    if (this.queue.hasClass('active')) {
+      this.info.removeClass('icon-unfold').addClass('icon-fold');
+    } else {
+      this.info.removeClass('icon-fold').addClass('icon-unfold');
+    }
+  }
+
+  getDockElems() {
+    const currentSide = this.storage.data.options.treeViewSide.toLowerCase();
+    const currentDock = atom.workspace.paneContainers[currentSide];
+
+    if (typeof currentDock !== 'object') return false;
+
+    const activePane = currentDock.getPanes()[0];
+
+    return {
+      currentSide,
+      currentDock,
+      activePane,
+    };
+  }
+
+  onDidCloseItem() {
+    this.detach();
   }
 
   attach() {
-    const enableDock = atom.config.get('Remote-FTP.tree.useDockIntegration');
-    const showOnRightSide = atom.config.get('tree-view.showOnRightSide');
-    const hideLocalDisplay = atom.config.get('Remote-FTP.tree.hideLocalWhenDisplayed');
+    const dockElems = this.getDockElems();
 
-    if (showOnRightSide && enableDock) {
-      // if show on right side && use new integration
-      const activePane = atom.workspace.getRightDock().paneContainer.getActivePane();
+    if (!dockElems.activePane) return;
 
-      this.panel = activePane.addItem(this);
-      activePane.activateItemforURI(this.getTitle());
-    } else if (!showOnRightSide && enableDock) {
-      // if not show on right side && use new integration
-      const activePane = atom.workspace.getLeftDock().paneContainer.getActivePane();
+    this.panel = dockElems.activePane.addItem(this);
 
-      this.panel = activePane.addItem(this);
-      activePane.activateItem(this.panel);
-    } else if (showOnRightSide && !enableDock) {
-      // if show on right side && not use new integration
-      this.panel = atom.workspace.addRightPanel({ item: this });
-    } else if (!showOnRightSide && !enableDock) {
-      // if not show on right side && not use new integration
-      this.panel = atom.workspace.addLeftPanel({ item: this });
+    if (!dockElems.currentDock.isVisible() && this.storage.data.options.treeViewShow) {
+      dockElems.currentDock.toggle();
     }
 
-    if (hideLocalDisplay) {
-      hideLocalTree();
-    } else {
-      showLocalTree();
-    }
+    atom.workspace.onDidDestroyPaneItem(({ item }) => {
+      if (item === this.panel) {
+        this.onDidCloseItem(this.panel);
+      }
+    });
   }
 
   attached() {
-    const enableDock = atom.config.get('Remote-FTP.tree.useDockIntegration');
-    const appVersion = atom.appVersion.split('-')[0];
-
-    if (semver.satisfies(appVersion, '<1.17.0')) {
-      this.classList.add('oldversion');
-    }
-
-    if (!enableDock && semver.satisfies(appVersion, '>=1.17.0')) {
-      this.tabPanel.addClass('show');
-    } else {
-      this.tabPanel.removeClass('show');
-    }
-
-    this.attr('data-use-dock-integration', enableDock);
+    this.storage.data.options.treeViewShow = true;
   }
 
   detach(...args) {
@@ -357,16 +274,27 @@ class TreeView extends ScrollView {
 
       this.panel = null;
     }
+
+    this.storage.data.options.treeViewShow = false;
+  }
+
+  dispose() {
+    this.subscriptions.dispose();
   }
 
   createDragAndDrops() {
     this.root.getViews().forEach((view) => {
-      view.dragEventsActivate();
+      if (typeof view.dragEventsDestroy === 'function') {
+        view.dragEventsActivate();
+      }
     });
   }
+
   disposeDragAndDrops() {
     this.root.getViews().forEach((view) => {
-      view.dragEventsDestroy();
+      if (typeof view.dragEventsDestroy === 'function') {
+        view.dragEventsDestroy();
+      }
     });
   }
 
@@ -388,84 +316,14 @@ class TreeView extends ScrollView {
     this.list.show();
     this.queue.show();
     this.offline.hide();
-  }
 
-  resizeVerticalStarted(e) {
-    e.preventDefault();
-
-    const $doc = $(document);
-
-    this.resizeHeightStart = this.queue.height();
-    this.resizeMouseStart = e.pageY;
-
-    $doc.on('mousemove', this.resizeVerticalView.bind(this));
-    $doc.on('mouseup', this.resizeVerticalStopped);
-  }
-
-  resizeVerticalStopped() {
-    delete this.resizeHeightStart;
-    delete this.resizeMouseStart;
-
-    const $doc = $(document);
-
-    $doc.off('mousemove', this.resizeVerticalView);
-    $doc.off('mouseup', this.resizeVerticalStopped);
-  }
-
-  resizeVerticalView(e) {
-    if (e.which !== 1) { return this.resizeVerticalStopped(); }
-
-    const delta = e.pageY - this.resizeMouseStart;
-    const height = Math.max(26, this.resizeHeightStart - delta);
-
-    this.queue.height(height);
-    this.scroller.css('bottom', `${height}px`);
-
-    return true;
-  }
-
-  resizeHorizontalStarted(e) {
-    e.preventDefault();
-
-    this.resizeWidthStart = this.width();
-    this.resizeMouseStart = e.pageX;
-
-    const $doc = $(document);
-
-    $doc.on('mousemove', this.resizeHorizontalView.bind(this));
-    $doc.on('mouseup', this.resizeHorizontalStopped);
-  }
-
-  resizeHorizontalStopped() {
-    delete this.resizeWidthStart;
-    delete this.resizeMouseStart;
-
-    const $doc = $(document);
-
-    $doc.off('mousemove', this.resizeHorizontalView);
-    $doc.off('mouseup', this.resizeHorizontalStopped);
-  }
-
-  resizeHorizontalView(e) {
-    if (e.which !== 1) { return this.resizeHorizontalStopped(); }
-
-    const delta = e.pageX - this.resizeMouseStart;
-    const width = Math.max(50, this.resizeWidthStart + delta);
-
-    this.width(width);
-
-    return true;
-  }
-
-  resizeToFitContent(e) {
-    e.preventDefault();
-
-    this.width(1);
-    this.width(this.list.outerWidth());
+    if (!atom.project.remoteftp.connector.ftp) {
+      this.info.hide();
+    }
   }
 
   remoteMultiSelect(e, current) {
-    const treeView = atom.project['remoteftp-main'].treeView;
+    const treeView = atom.project.remoteftpMain.treeView;
     const lastSelected = treeView.lastSelected[treeView.lastSelected.length - 1][0];
 
     const keyCode = e.keyCode || e.which;
@@ -545,7 +403,7 @@ class TreeView extends ScrollView {
     if (next.length >= 1) {
       if (!isMulti) current.removeClass('selected');
 
-      next.first().addClass('selected');
+      next.last().addClass('selected');
     }
   }
 
@@ -571,7 +429,7 @@ class TreeView extends ScrollView {
     if (next.length >= 1) {
       if (!isMulti) current.removeClass('selected');
 
-      next.last().addClass('selected');
+      next.first().addClass('selected');
     }
   }
 
@@ -606,13 +464,13 @@ class TreeView extends ScrollView {
     const current = this.list.find('.selected');
 
     if (current.length) {
-      const scrollerTop = this.scroller.scrollTop();
+      const scrollerTop = this.scrollTop();
       const selectedTop = current.position().top;
 
       if (selectedTop < scrollerTop - 10) {
-        this.scroller.pageUp();
-      } else if (selectedTop > scrollerTop + (this.scroller.height() - 10)) {
-        this.scroller.pageDown();
+        this.pageUp();
+      } else if (selectedTop > scrollerTop + (this.height() - 10)) {
+        this.pageDown();
       }
     }
   }

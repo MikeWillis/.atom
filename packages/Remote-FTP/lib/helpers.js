@@ -8,10 +8,12 @@ import DirectoryView from './views/directory-view';
 
 let addIconToElement;
 
+export const checkIgnoreRemote = item => (item && !atom.project.remoteftp.checkIgnore(item.name.attr('data-path')));
+export const checkIgnoreLocal = item => (!atom.project.remoteftp.checkIgnore(item));
+export const checkPaths = (index, elem) => (elem.getPath ? elem.getPath() : '');
 export const hasProject = () => atom.project && atom.project.getPaths().length;
-export const multipleHostsEnabled = () => atom.config.get('Remote-FTP.beta.multipleHosts');
+export const multipleHostsEnabled = () => atom.config.get('remote-ftp.beta.multipleHosts');
 export const hasOwnProperty = ({ obj, prop }) => Object.prototype.hasOwnProperty.call(obj, prop);
-export const resizeCursor = process.platform === 'win32' ? 'ew-resize' : 'col-resize';
 export const splitPaths = path => path.replace(/^\/+/, '').replace(/\/+$/, '').split('/');
 
 export const simpleSort = (a, b) => {
@@ -153,7 +155,7 @@ export const traverseTree = (localPath, callback) => {
   if (typeof callback === 'function') callback.apply(null, [list]);
 };
 
-export const validateConfig = (data) => {
+export const validateConfig = (data, configFileName) => {
   try {
     // try to parse the json
     JSON.parse(data);
@@ -172,13 +174,13 @@ export const validateConfig = (data) => {
     }
 
     // show notification
-    atom.notifications.addError('Could not parse `.ftpconfig`', {
+    atom.notifications.addError(`Could not parse \`${configFileName}\``, {
       detail: `${error.message}`,
       dismissable: false,
     });
 
     // open .ftpconfig file and mark the faulty line
-    atom.workspace.open('.ftpconfig').then((editor) => {
+    atom.workspace.open(configFileName).then((editor) => {
       if (lineNumber === -1) return; // no line number to mark
 
       const decorationConfig = {
@@ -219,13 +221,13 @@ export const getSelectedTree = () => {
   return views.map((err, item) => $(item).view() || null).get();
 };
 
-export function checkTarget(e) {
+export function checkTarget(e, disableRoot = false) {
   const view = $(e.currentTarget).view();
   const hasProjectRoot = view.hasClass('project-root');
   const hasProjectRootHeader = $(e.target).hasClass('project-root-header');
 
   if (!view || view instanceof DirectoryView === false) return false;
-  if (hasProjectRoot && !hasProjectRootHeader) return false;
+  if (disableRoot && hasProjectRoot && !hasProjectRootHeader) return false;
 
   return true;
 }
@@ -251,4 +253,17 @@ export function mkdirSyncRecursive(path) {
 
     return curDir;
   }, initDir);
+}
+
+export function statsToPermissions(stats) {
+  /* eslint no-bitwise: 0 */
+  const PER_OTHER = { 1: 'x', 2: 'w', 4: 'r' };
+  const PER_GROUP = { 8: 'x', 16: 'w', 32: 'r' };
+  const PER_OWNER = { 64: 'x', 128: 'w', 256: 'r' };
+
+  return {
+    other: Object.keys(PER_OTHER).map(elem => ((stats.mode & elem) ? PER_OTHER[elem] : '')).reverse().join(''),
+    group: Object.keys(PER_GROUP).map(elem => ((stats.mode & elem) ? PER_GROUP[elem] : '')).reverse().join(''),
+    user: Object.keys(PER_OWNER).map(elem => ((stats.mode & elem) ? PER_OWNER[elem] : '')).reverse().join(''),
+  };
 }

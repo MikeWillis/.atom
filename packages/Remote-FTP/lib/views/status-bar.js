@@ -33,7 +33,7 @@ class StatusBarView extends View {
       isConnected: false,
     };
 
-    this.ftp = atom.project['remoteftp-main'];
+    this.ftp = atom.project.remoteftpMain;
     this.ftp.client.onDidChangeStatus((status) => {
       this.changeStatus(status);
     });
@@ -67,7 +67,7 @@ class StatusBarView extends View {
     });
 
     this.innerBar.onDidOpenSettings(() => {
-      atom.workspace.open('atom://config/packages/Remote-FTP');
+      atom.workspace.open('atom://config/packages/remote-ftp');
     });
   }
 

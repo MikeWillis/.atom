@@ -3,15 +3,15 @@
 import { Emitter, CompositeDisposable } from 'atom';
 import path from 'path';
 import { $, View } from 'atom-space-pen-views';
-import { getIconHandler, checkTarget, recursiveViewDestroy } from '../helpers';
+import { getIconHandler, checkTarget } from '../helpers';
 import FileView from './file-view';
 
 class DirectoryView extends View {
-
   static content() {
     return this.li({
       class: 'directory entry list-nested-item collapsed',
       is: 'tree-view-directory',
+      draggable: true,
     }, () => {
       this.div({
         class: 'header list-item',
@@ -31,6 +31,7 @@ class DirectoryView extends View {
   initialize(directory) {
     // super.initialize(directory);
 
+    this.moveTarget = null;
     this.emitter = new Emitter();
     this.subscriptions = new CompositeDisposable();
     this.subsDrags = new CompositeDisposable();
@@ -39,6 +40,10 @@ class DirectoryView extends View {
     this.name.text(this.item.name);
     this.name.attr('data-name', this.item.name);
     this.name.attr('data-path', this.item.remote);
+
+    if (atom.project.remoteftp.checkIgnore(this.item.remote)) {
+      this.addClass('status-ignored');
+    }
 
     const addIconToElement = getIconHandler();
     if (addIconToElement) {
@@ -56,6 +61,7 @@ class DirectoryView extends View {
 
     if (this.item.isRoot) {
       this.addClass('project-root');
+      // this.removeAttr('draggable');
       this.header.addClass('project-root-header');
       this.name.addClass('icon-server').removeClass('icon-file-directory');
     }
@@ -68,7 +74,7 @@ class DirectoryView extends View {
     // Events
     this.events();
 
-    if (atom.config.get('Remote-FTP.tree.enableDragAndDrop')) {
+    if (atom.config.get('remote-ftp.tree.enableDragAndDrop')) {
       this.dragEventsActivate();
     }
   }
@@ -76,7 +82,7 @@ class DirectoryView extends View {
   triggers() {
     this.subscriptions.add(
       this.item.onChangeSelect(() => {
-        let lastSelected = atom.project['remoteftp-main'].treeView.lastSelected;
+        let lastSelected = atom.project.remoteftpMain.treeView.lastSelected;
 
         if (this.item.isSelected) {
           lastSelected.push(this);
@@ -219,6 +225,33 @@ class DirectoryView extends View {
     });
   }
 
+  static actionRemoteMove(e, dataTransfer) {
+    const ftp = atom.project.remoteftpMain;
+    const pathInfos = JSON.parse(dataTransfer.getData('pathInfos'));
+    const newPathInfo = DirectoryView.queryDataPath(e.currentTarget);
+    const destPath = path.posix.join(newPathInfo, pathInfos.name);
+
+    if (pathInfos.fullPath === '/' || pathInfos.fullPath === destPath) return;
+
+    ftp.client.rename(pathInfos.fullPath, destPath, (err) => {
+      if (err) console.error(err);
+    });
+  }
+
+  static actionToRemote(e, dataTransfer) {
+    const newPathInfo = DirectoryView.queryDataPath(e.currentTarget);
+    const localPaths = JSON.parse(dataTransfer.getData('localPaths'));
+    const destPath = path.posix.join(newPathInfo, localPaths.name);
+
+    atom.project.remoteftpMain.client.uploadTo(localPaths.fullPath, destPath, (err) => {
+      if (err) console.error(err);
+    });
+  }
+
+  static queryDataPath(target) {
+    return target.querySelector('span[data-path]').getAttribute('data-path');
+  }
+
   dragEventsActivate() {
     this.on('drop', e => this.emitter.emit('drop', e));
     this.on('dragstart', e => this.emitter.emit('dragstart', e));
@@ -227,43 +260,28 @@ class DirectoryView extends View {
     this.on('dragleave', e => this.emitter.emit('dragleave', e));
 
     this.onDidDrop((e) => {
-      const self = e.currentTarget;
       e.preventDefault();
       e.stopPropagation();
 
-      self.classList.remove('selected');
+      e.currentTarget.classList.remove('selected');
 
       if (!checkTarget(e)) return;
+      if (this.moveTarget === e.currentTarget) return;
 
-      const ftp = atom.project['remoteftp-main'];
-      const $self = $(self);
       const dataTransfer = e.originalEvent.dataTransfer;
-      const pathInfos = JSON.parse(dataTransfer.getData('pathInfos'));
-      const newPathInfo = $self.find('span[data-path]').attr('data-path');
-      const destPath = path.posix.join(newPathInfo, pathInfos.name);
 
-      if (pathInfos.fullPath === destPath) return;
+      if (dataTransfer.getData('pathInfos').length !== 0) {
+        DirectoryView.actionRemoteMove(e, dataTransfer);
+      } else if (dataTransfer.getData('localPaths').length !== 0) {
+        DirectoryView.actionToRemote(e, dataTransfer);
+      }
 
-      ftp.client.rename(pathInfos.fullPath, destPath, (err) => {
-        if (err) console.error(err);
-
-        const sourceTree = ftp.treeView.resolve(path.posix.dirname(pathInfos.fullPath));
-        const destTree = ftp.treeView.resolve(path.posix.dirname(destPath));
-
-        // NOTE: Check the hierarchy.
-        if (sourceTree) {
-          sourceTree.open();
-          recursiveViewDestroy(sourceTree);
-        }
-
-        if (destTree) {
-          destTree.open();
-          recursiveViewDestroy(destTree);
-        }
-      });
+      this.moveTarget = null;
     });
 
     this.onDidDragStart((e) => {
+      this.moveTarget = e.currentTarget;
+
       const target = $(e.target).find('.name');
       const dataTransfer = e.originalEvent.dataTransfer;
       const pathInfos = {
