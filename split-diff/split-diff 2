@@ -1,0 +1,1242 @@
+<?php
+/* 2019-03-06: receiver for index.NoSymbols.php AND manage tags. Receives just a
+* list of POs, and generates a zip file containing all labels pertaining to those SOs
+*/
+ini_set('max_execution_time', 300);
+include_once( "../../../include/session.php" );
+include_once( $_SERVER["DOCUMENT_ROOT"] . "/ps/functions.php" );
+include_once( "../../../include/functions.php" );
+$database = dbConnect("pdo");
+
+$userType = GetUserType( $database ); // returns "adminMiva" or something like that
+$PermittedUsers = array( "adminMiva", "adminArt", "userArt", "customerService" );
+
+$debug = false || isset( $_REQUEST["debug"] ); // true false
+$verbose = $debug && true; // allows us to turn off verbose but still debug (meaning we can get a file to download for testing purposes)
+if ( $debug ) {
+   //$SONumbers = array( "SO1695298", "SO1695310" );
+   //$SONumbers = array( "SO1696329" );
+   //$SONumbers = explode( ",", "SO1696166,SO1696169,SO1696171,SO1696174,SO1696175" );
+   //$SONumbers = array( "SO1696152" );
+   if ( isset( $_POST["soNumbers"] ) ) {
+      $SONumbers = explode( ",", $_POST["soNumbers"] );
+   }
+
+   $SONumbers = isset( $_REQUEST["debug"] ) && $_REQUEST["debug"] != "" ? $_REQUEST["debug"] : array( "SO1732265" );
+   if ( !is_array( $SONumbers ) ) {
+      $SONumbers = strpos( $SONumbers, "," ) !== false ? explode( ",", $SONumbers ) : array( $SONumbers );
+   }
+   $SONumbers = array_unique( $SONumbers );
+   for( $i = 0; $i < sizeof( $SONumbers ); $i++ ) {
+      if ( strtolower( substr( $SONumbers[$i], 0, 2 ) ) != "so" ) {
+         $SONumbers[$i] = "SO" . $SONumbers[$i];
+      }
+   }
+   echo "\nSONumbers:\n"; var_dump( $SONumbers ); echo "\n";
+   //$checkInvoiceTable = true;
+} else {
+   if ( isset( $_POST["soNumbers"] ) ) {
+      $SONumbers = explode( ",", $_POST["soNumbers"] );
+   }
+}
+
+if ( isset( $SONumbers ) ) {
+   $SONumbers = array_unique( $SONumbers );
+} else {
+   echo "\nexiting";
+   exit();
+}
+
+function cleanTextForJS( $text ) {
+   return html_entity_decode( str_replace("\"", "\\\"", str_replace("&amp;", "&", $text)) );
+}
+
+function getDesignID( $designName, $labelOnly=0, $optType=false, $verbose=false ) {
+   /* This function replaces getLogoID()
+   * The goal is to return the numeric ID number for this graphic
+   * v2: PDO ONLY
+   * v2.1 allowing optType to be passed in
+   */
+
+   /*
+   * there are several ways to try to find the design ID / optCode.
+   * 1. locate if optData = logo
+   * 2. locate if optData contains logo
+   *
+   * if found, returns the value of fileName (removing the .png portion)
+   * -- ex: logo = 'Baby Booties' returns '068'
+   */
+   if ( $verbose ) {
+      echo "\n\nLooking for Design ID...\n";
+      echo 'Design name: "' . $designName . '"\n';
+   }
+   $database = dbConnect("pdo" );
+   $designName = trim( strtolower( str_replace( array( "-", "_", " ", "(", ")", "'" ), array( "", "", "", "", "", "" ), $designName ) ) );
+
+   $where = array( strtolower( str_replace( array( " ", ")", "(", "-"), array( "", "", "", ""), $designName ) ) );
+   echo "\nwhere:\n"; var_dump( $where ); echo "\n\n";
+
+   include_once( "AtomSucks.php" );
+   $sql = PutStupidThingsHere( "A" );
+   if ( $optType ) {
+      $sql .= " AND optType = ?";
+      $where[] = $optType;
+      //var_dump( $where );
+   }
+   if ( $labelOnly ) {
+      $where[] = "ST";
+      $sql .= " AND itemType = ?";
+   }
+   elseif ($_POST['labelShape'] == 'lipBalmBall') {
+      $where[] = "lipBalmBall";
+      $sql .= " AND itemType = ?";
+   }
+   //echo "\nsql = " . $sql . "\n";
+
+   $sql = $database->prepare( $sql );
+
+   if ( $sql->execute( $where ) ) {
+      // Trying personalizationData first:
+      //var_dump( $sql );
+      $sqlResults = $sql->fetchAll(PDO::FETCH_ASSOC);
+      //echo "\nnum rows = " . sizeof( $sqlResults ) . "\n";
+
+      if ( !sizeof( $sqlResults ) ) {
+
+         /* 2019-07-17: this branch was unfinished, and it seems like it was meant to check
+         * the pExpressionsOptions table as an alternative to personalizationData. That's not needed, the
+         * pExpressionsOptions table should NOT be in use anymore.
+         * Meanwhile, the only way we should wind up in a situation where there's no order info
+         * in either navision or in our database is when it's an amazon photo upload order.
+         * So let's just hardcode that data for now
+         */
+
+         if ( true ) {
+            $result = "948";
+         } else {
+            // 2019-07-17: this is the old, unfinished branch
+            // If no matches are found in personalizationData table, try pExpressionsOptions:
+            if ( $verbose ) { echo "No matches in personalizationData, checking pExpressionsOptions...\n"; }
+            $where = array( strtolower( str_replace( "-", "", $designName ) ) );
+
+            /* 2018-05-24: splitting this into two lines because stupid atom syntax highlighting gets confused if it's one line
+            */
+            $sql = "SELECT * FROM pExpressionsOptions WHERE ";
+            $sql .= "LOCATE ( ?, REPLACE( REPLACE( REPLACE( REPLACE( LOWER( optData ), ' ', '-' ), ')', '' ), '(', '' ), '-', '' ) > 0";
+            if ( $labelOnly ) {
+               $sql .= " AND active = 'label'";
+            }
+
+            $sql = $database->prepare( $sql );
+         }
+      } else {
+         // Continuing on personalizationData, look for graphicID value:
+         foreach( $sqlResults as $data ) {
+            if ( $verbose ) { var_dump( $data ); }
+            if ( !isset($result) ) {
+               if ( $data["graphicID"] ) {
+                  if ( $verbose ) { echo "\nGraphic ID found: '" . $data["graphicID"] . "'\n\n"; }
+                  $result = $data["graphicID"];
+               } elseif ( $optType == "SSgraphic" || $optType == "SScolor" ) {
+                  // Simply Stylish
+                  $result = trim( str_replace( ".png", "", $data["fileName"] ) );
+               }
+            } elseif ( $data["optCode"] || ($optType=="SMgraphic" || $optType=="Wanderlust" || $optType=="WanderlustWhiteBG") ) {
+               $result = trim( $data["optCode"] );
+            }
+         }
+      }
+   } else {
+      $result = 0;
+   }
+
+   return $result;
+} // function getDesignID()
+
+ob_start();
+if ( $verbose ) { echo "<pre>"; }
+
+if ( in_array( $userType, $PermittedUsers ) ) {
+   $checkInvoiceTable = isset( $_POST["checkShippedOrders"] ) && $_POST["checkShippedOrders"] == "1" ? true : (isset( $checkInvoiceTable ) ? $checkInvoiceTable : false);
+
+   $CustomFieldIDs["LabelShapeCode"] = getCustomProdFieldID( "LabelShapeCode", $database, "pdo" );
+   $CustomFieldIDs["designsPerPrintedPage"] = getCustomProdFieldID( "designsPerPrintedPage", $database, "pdo" );
+   $CustomFieldIDs["personalizationType"] = getCustomProdFieldID( "personalizationType", $database, "pdo" );
+   $LabelShapesAndShapes = GetLabelTypesAndShapes( $database );
+   $Orders = getNavisionOrderRows_V2( $SONumbers, $checkInvoiceTable );
+
+   if ( $verbose ) { echo "\n\nSONumbers:\n"; var_dump( $SONumbers ); echo "\n"; }
+
+   function CreateZip_GetDesignDataByDesignID( $database, $DesignID ) {
+      $result = false;
+      $where = array( $DesignID, $DesignID );
+      $LabelDesignData = $database->prepare("SELECT * FROM labelDesignDataB WHERE siteID = ? OR LocalDesignID = ?");
+      if ( $LabelDesignData->execute( $where ) ) {
+         $result = $LabelDesignData->fetchAll(PDO::FETCH_ASSOC);
+      }
+      return $result;
+   }
+
+   function CreateZip_GatherPersonalization( $database, $verbose, $Type, $KeyList, &$OrderData, $LabelShape=false, $OrderInfo=false, $OrderLine=false, $OrderData_ArrayKey=false, $MainLabelType=false, $ArrayKeys=false ) {
+
+      if ( $Type == "Navision" ) {
+         // the nav loop calls this function once for each description line
+         foreach( $KeyList as $key=>$target ) {
+            if ( !isset( $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Personalization"][$key] ) ) {
+               if ( !is_array( $target ) && strpos( $OrderLine["data"], $target ) !== false ) {
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Personalization"][$key] = trim( str_replace( $target, "", $OrderLine["data"] ) );
+               } elseif ( is_array( $target ) ) {
+                  foreach( $target as $subTarget ) {
+                     if ( !isset( $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Personalization"][$key] ) && strpos( $OrderLine["data"], $subTarget ) !== false ) {
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Personalization"][$key] = trim( str_replace( $subTarget, "", $OrderLine["data"] ) );
+                     }
+                  }
+               }
+            }
+         }
+      } elseif ( $Type == "DB" ) {
+         $ExactMatchColumns = array( "textLine1Color", "textLine2Color" );
+         if ( $LabelDesignData = CreateZip_GetDesignDataByDesignID( $database, $OrderInfo["Personalization"]["DesignIDNumber"] ) ) {
+            if ( sizeof( $LabelDesignData ) > 0 ) {
+               if ( $verbose ) {
+                  echo "\ngot order data from db for so/item '" . $OrderInfo["SONumber"] . "'/'" . $OrderInfo["ItemNumber"] . "':\n";
+                  var_dump( $LabelDesignData[0] );
+                  echo "\n";
+               }
+               foreach( $LabelDesignData[0] as $ColumnName=>$ColumnValue ) {
+                  if ( $verbose ) { echo "\nchecking DB ColumnName '" . $ColumnName . "'"; }
+                  foreach( $KeyList as $key=>$target ) {
+                     if ( $verbose ) { echo "\n--against key '" . $key . "', target = '" . $target . "'"; }
+                     if ( !isset( $OrderData[$ArrayKeys[0]][$ArrayKeys[1]][$ArrayKeys[2]]["Personalization"][$key] ) ) {
+                        if ( $verbose ) { echo " .. not set"; }
+                        if ( !is_array( $target ) ) {
+                           if ( (( !in_array($ColumnName, $ExactMatchColumns) && strpos( $ColumnName, $target ) !== false ) || ( in_array($ColumnName, $ExactMatchColumns) && strtolower( $ColumnName ) == strtolower( $target ) ) ) && trim( str_replace( $target, "", $ColumnValue ) ) != "" ) {
+                              if ( $verbose ) { echo " .. MATCH"; }
+                              $OrderData[$ArrayKeys[0]][$ArrayKeys[1]][$ArrayKeys[2]]["Personalization"][$key] = trim( str_replace( $target, "", $ColumnValue ) );
+                           }
+                        } else {
+                           foreach( $target as $subTarget ) {
+                              if ( !isset( $OrderData[$ArrayKeys[0]][$ArrayKeys[1]][$ArrayKeys[2]]["Personalization"][$key] ) && strpos( $ColumnName, $subTarget ) !== false && trim( str_replace( $subTarget, "", $ColumnValue ) ) != "" ) {
+                                 if ( $verbose ) { echo " .. not set .. MATCH .. setting to '" . trim( str_replace( $subTarget, "", $ColumnValue ) ) . "'"; }
+                                 $OrderData[$ArrayKeys[0]][$ArrayKeys[1]][$ArrayKeys[2]]["Personalization"][$key] = trim( str_replace( $subTarget, "", $ColumnValue ) );
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   function CreateZip_GetSTType( $KeyLists, $OrderLines, $CurrentLineNumber, $database ) {
+      /* the easiest way to tell if it's a vintage or a monogram instead of regular DYO is to
+      * find and check the design..
+      */
+      $result = false;
+      $PData = array( "graphic"=>false, "backgroundColor"=>false, "DesignIDNumber"=>false );
+      foreach( $OrderLines as $LineNumber=>$OrderLine ) {
+         $hasPattern = false;
+         if ( $LineNumber > $CurrentLineNumber ) {
+            if ( $OrderLine["lineType"] == "Item" ) {
+               // exit, we've accidentally moved on to another item
+               break;
+            } elseif ( strpos( $OrderLine["data"], $KeyLists["Navision"]["pattern"] ) !== false ) {
+               $result = "DYO";
+            } else {
+               // ok check it. get the color too
+               $KeysToCheck = array( "graphic", "backgroundColor", "DesignIDNumber" );
+               foreach( $KeyLists["Navision"] as $key=>$target ) {
+                  if ( in_array( $key, $KeysToCheck) ) {
+                     if ( !is_array( $target ) && strpos( $OrderLine["data"], $target ) !== false ) {
+                        // ok then, what's the graphic?
+                        $PData[$key] = strtolower(trim( str_replace( $target, "", $OrderLine["data"] ) ));
+                     } elseif ( is_array( $target ) ) {
+                        foreach( $target as $subTarget ) {
+                           if ( strpos( $OrderLine["data"], $subTarget ) !== false ) {
+                              // ok then, what's the graphic?
+                              $PData[$key] = strtolower(trim( str_replace( $subTarget, "", $OrderLine["data"] ) ));
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+      if ( !$PData["graphic"] && !$PData["backgroundColor"] && $PData["DesignIDNumber"] ) {
+         // ok let's check the DB.. this is annoying
+         echo " .. checking DB";
+         $PData[0][1][2]["Personalization"] = false; // don't ask, it's stupid
+         $PData[0][1][2]["Personalization"] = CreateZip_GatherPersonalization( $database, $verbose, $Type, $KeyLists["DB"], $PData, false, false, false, false, false, array( 0=>false, 1=>false, 2=>false ) );
+         if ( isset( $PData[0][1][2]["Personalization"]["graphic"] ) ) {
+            $PData["graphic"] = $PData[0][1][2]["Personalization"]["graphic"];
+         }
+         if ( isset( $PData[0][1][2]["Personalization"]["backgroundColor"] ) ) {
+            $PData["backgroundColor"] = $PData[0][1][2]["Personalization"]["backgroundColor"];
+         }
+      }
+
+      echo "\nPData:\n"; var_dump( $PData ); echo "\n";
+
+      if ( $PData["graphic"] && $PData["backgroundColor"] ) {
+         switch( strtolower(str_replace( " ", "", $PData["graphic"] )) ) {
+         case "botanicalborder":
+         case "decorativeblossom":
+         case "mercibouquet":
+            switch( $PData["backgroundColor"] ) {
+            case "raspberrytart":
+            case "watermelonsorbet":
+            case "classyblackandwhite":
+            case "mintmilkshake":
+            case "chocolatechipcookie":
+            case "multicolorway":
+            case "bubblegum":
+            case "harvest":
+            case "timelessblackandwhite":
+            case "fruitsmoothie":
+            case "purpleparadise":
+            case "caribbeanvacation":
+            case "pinklemonade":
+               $result = "vintage";
+               break;
+            }
+            break;
+         case "arrow":
+         case "arrowheart":
+         case "flowerbottom":
+         case "hexagon":
+         case "flowertop":
+         case "oars":
+         case "pennant":
+         case "key":
+         case "wheatwreathpersonalized":
+         case "wheatwreath":
+            switch( $PData["backgroundColor"] ) {
+            case "mintchip":
+            case "chocolatechip":
+            case "blushingbride":
+            case "vintagegarden":
+            case "champagnetoast":
+            case "wine":
+            case "blackandwhite":
+            case "poolhouse":
+            case "rusticevent":
+            case "bluebellbouquet":
+            case "berrysmoothie":
+            case "summersky":
+            case "creamsicle":
+            case "eggplant":
+            case "caribbean":
+            case "deeprose":
+            case "mintmadness":
+            case "tulipgarden":
+            case "oceanbreeze":
+            case "beachumbrella":
+            case "beachparty":
+            case "sherbetstripe":
+            case "midnight":
+            case "beachball":
+            case "rosebush":
+            case "champagneblush":
+               $result = "monogram";
+               break;
+            }
+            break;
+         }
+      } else {
+         if ( $PData["graphic"] ) {
+            $result = "nocolor";
+         } elseif ( $PData["backgroundColor"] ) {
+            $result = "nographic";
+         } else {
+            $result = "nographicnocolor";
+         }
+      }
+      return $result;
+   }
+
+   function labelDataUsageLog( $database, $SONumbers, $OrderData ) {
+      // PDO ONLY
+      // v2.1 (2019-05-08): designs per page and pages needed are now part of $soList's items array
+      // v2: this replaces function usageLog() which was located in the various labelData scripts
+      echo "\nlogging:\n";
+      $source = $_SESSION["username"];
+
+      // note that Key2 is actually the label shape like 'circle35' or whatever
+      foreach( $OrderData as $Key_MainLabelType=>$LabelShape ) {
+         foreach( $LabelShape as $Key_SubLabelType=>$RandomKey ) {
+            foreach( $RandomKey as $Key_RandomKey=>$OrderInfo ) {
+               //echo "\n--checking order item for LabelShape '" . $Key_SubLabelType . "' so '" . $OrderInfo["SONumber"] . "', page count = '" . $OrderInfo["PageCount"] . "'\n"; var_dump( $OrderInfo["PageCount"] );
+               $InsertData[$Key_SubLabelType]["SOList"][] = $OrderInfo["SONumber"];
+               //var_dump( $InsertData ); echo "\n";
+               if ( !isset( $InsertData[$Key_SubLabelType]["ItemCount"] ) ) {
+                  $InsertData[$Key_SubLabelType]["ItemCount"] = 1;
+               } else {
+                  $InsertData[$Key_SubLabelType]["ItemCount"]++;
+               }
+               if ( isset( $OrderInfo["PageCount"] ) && $OrderInfo["PageCount"] && gettype($OrderInfo["PageCount"]) == "double" ) {
+                  if ( !isset( $InsertData[$Key_SubLabelType]["PageCount"] ) ) {
+                     //echo "\npage count not set";
+                     $InsertData[$Key_SubLabelType]["PageCount"] = $OrderInfo["PageCount"];
+                  } else {
+                     //echo "\npage count set";
+                     $InsertData[$Key_SubLabelType]["PageCount"] += $OrderInfo["PageCount"];
+                  }
+               }
+            }
+         }
+      }
+
+      //var_dump( $InsertData ); echo "\n";
+
+      foreach( $InsertData as $LabelShape=>$LabelData ) {
+         //echo "\nLabelData:\n"; var_dump( $LabelData ); echo "\n";
+         $soNumberList = implode( ",", $LabelData["SOList"] );
+         $where = array( $soNumberList, sizeof($LabelData["SOList"]), $LabelShape, $source, $LabelData["PageCount"], $LabelData["ItemCount"] );
+         $insert = $database->prepare("INSERT INTO labelGeneratorUsage ( soNumbers, soCount, labelType, source, pageCount, itemCount ) VALUES ( ?, ?, ?, ?, ?, ? )");
+         echo "\ninserting:\n"; var_dump( $where ); echo "\n";
+         if ( true ) {
+            if ( !$insert->execute( $where ) ) {
+               echo "\ninsert failed";
+               mail( "mwillis@fashioncraft.com", "Label Data Generator Used", print_r( $_POST, 1 ) . "\r\n\r\n\r\nIP = " . $source );
+            } else {
+               echo "\ninsert completed";
+            }
+         }
+      }
+   } // function labelDataUsageLog
+
+   $IgnoredPersonalizationTypes = array( false, "", "Glassware" );
+
+   foreach( $Orders as $SONumber=>$OrderLines ) {
+      ksort( $OrderLines );
+      $Orders[$SONumber] = $OrderLines;
+   }
+
+   if ( $verbose ) {
+      echo "\nOrders:\n"; var_dump( $Orders ); echo "\n";
+      echo "\nLabelShapesAndShapes:\n"; var_dump( $LabelShapesAndShapes ); echo "\n";
+   }
+
+   $KeyLists["Navision"] = [
+      "graphic"=>"Graphic:",
+      "text1"=>[ "T1:", "Text 1:"],
+      "text2"=>[ "T2:", "Text 2:"],
+      "text3"=>[ "T3:", "Text 3:"],
+      "layout"=>[ "Layout:","Tag Layout (A=circle,B=Diamond):"],
+      "backgroundColor"=>"Background Color:",
+      "borderColor"=>"Border Color:",
+      "accentColor"=>"AccentColor:",
+      "pattern"=>"Pattern:",
+      "patternColor"=>[ "Pattern Color:", "PatternColor:" ],
+      "font"=>[ "Font:", "Font Style:" ],
+      "line1Color"=>[ "Line 1 Color:", "Text Color:", "TextColor:" ],
+      "lines23Color"=>"Lines 2 and 3 Color:",
+      "DesignText"=>"DesignText:",
+      "DesignIDNumber"=>"DIN:"
+   ];
+   $KeyLists["DB"] = [
+      "graphic"=>"design",
+      "text1"=>"textLine1",
+      "text2"=>"textLine2",
+      "text3"=>"textLine3",
+      "layout"=>"layout",
+      "backgroundColor"=>[ "backgroundTopColor", "backgroundColor" ],
+      "borderColor"=>[ "borderBottomColor", "borderColor" ],
+      "accentColor"=>"accentColor",
+      "pattern"=>"pattern",
+      "patternColor"=>"patternColor",
+      "font"=>"font",
+      "line1Color"=>"textLine1Color",
+      "lines23Color"=>"textLine2Color",
+      "DesignText"=>[ "designText", "monogramLetters" ],
+      "DesignIDNumber"=>"DIN:",
+      "tagsOrStickers"=>"tagsOrStickers"
+   ];
+
+   foreach( $Orders as $SONumber=>$OrderLines ) {
+      // does this order have admin comments, or is it marked do not release? Every item on this order will get the flags
+      $where = array( $SONumber );
+      $CheckFlags = $database->prepare("SELECT adminNotes,DoNotRelease FROM navOrderHeaders WHERE navID = ?");
+      if ( $CheckFlags->execute( $where ) ) {
+         $CheckFlags = $CheckFlags->fetchAll(PDO::FETCH_ASSOC);
+         if ( sizeof( $CheckFlags ) ) {
+            $BarCode_DoNotRelease = $CheckFlags["DoNotRelease"] == 1 ? "true" : "false";
+            $BarCode_Review = $CheckFlags["adminNotes"] != "" ? "true" : "false";
+         }
+      }
+
+      /* ok now let's loop through each line and look for an X item.
+      * Once found, we'll determine what type it is and then gather the data on the following lines, until we find
+      * another item line
+      */
+      if ( $debug ) { echo "\nOrderLines:\n"; print_r( $OrderLines ); }
+
+      foreach( $OrderLines as $LineNumber=>$OrderLine ) {
+         if ( $verbose ) { echo "\nchecking line '" . $LineNumber . "'"; }
+         if ( $OrderLine["lineType"] == "Item" ) {
+            $ItemNumber_StringLength = strlen( $OrderLine["itemNumber"] );
+            $ItemNumber_Upper = strtoupper( $OrderLine["itemNumber"] );
+            $IsTag = $ItemNumber_Upper == "TAGS" || $ItemNumber_Upper == "STCK";
+            $IsXItem = substr( $ItemNumber_Upper, $ItemNumber_StringLength - 1, 1 ) == "X";
+
+            $CustomFieldData_ItemNumber = substr( $OrderLine["itemNumber"], 0, $ItemNumber_StringLength - 1 );
+            $CustomFieldData_ItemNumber = strtoupper($CustomFieldData_ItemNumber) == "6777CS" ? "6777ST" : $CustomFieldData_ItemNumber;
+
+            if ( $verbose ) {
+               echo "\nusing CustomFieldData_ItemNumber '" . $CustomFieldData_ItemNumber . "' for item '" . $OrderLine["itemNumber"] . "'";
+            }
+            if ( $IsXItem ) {
+               $PersonalizationType = getCustProdField( "personalizationType", $CustomFieldIDs["personalizationType"], $CustomFieldData_ItemNumber, false, "pdo", $database, true, $verbose );
+               if ( $verbose ) {
+                  echo "\nPersonalizationType = '" . $PersonalizationType . "'";
+                  echo "\nitem sub = '" . substr( $OrderLine["itemNumber"], 0, $ItemNumber_StringLength - 1 ) . "'";
+               }
+            }
+
+            //echo "\nis tag ('" . $ItemNumber_Upper . "'): \n"; var_dump( $IsTag ); echo "\nverbose:\n"; var_dump( $verbose );
+            if ( !($IsXItem || $IsTag) ) {
+               $OnValidItem = false;
+            } elseif ( $IsXItem && in_array( $PersonalizationType, $IgnoredPersonalizationTypes ) ) {
+               $OnValidItem = false;
+            } elseif ( true ) {
+               if ( $verbose ) { echo "\nX item found: '" . $OrderLine["itemNumber"] . "'"; }
+               $OnValidItem = true;
+               $BaseItemNumber = substr( $ItemNumber_Upper, $ItemNumber_StringLength - 1, 1 ) == "X" ? substr( $OrderLine["itemNumber"], 0, $ItemNumber_StringLength - 1 ) : $ItemNumber_Upper;
+               if ( $verbose ) { echo " .. BaseItemNumber = '" . $BaseItemNumber . "'"; }
+
+               // see https://stackoverflow.com/questions/4356289/php-random-string-generator - very interesting stuff
+               $OrderData_ArrayKey = substr(str_shuffle(MD5(microtime())), 0, 10);
+
+               // what kind of item is this? Glass, ST, SM, vintage?
+               if ( $IsTag || strpos( $ItemNumber_Upper, "ST" ) !== false ) {
+                  // as of 2019-03-06, DYO is the only type of ST (we're going to discontinue vintage and st_monogram because they get almost no orders)
+                  $MainLabelType = "DYO";
+                  if ( $verbose ) { echo " .. determining STType"; }
+                  /* 2019-07-01: we still haven't discontinued vintage and monogram.. let's figure out a way to handle them..
+                  */
+
+                  $STType = CreateZip_GetSTType( $KeyLists, $OrderLines, $LineNumber, $database );
+                  //echo " .. STType:\n"; var_dump( $STType ); echo "\n";
+                  switch( $STType ) {
+                  case "vintage":
+                     $MainLabelType = "DYOVintage";
+                     break;
+                  case "monogram":
+                     $MainLabelType = "DYOMonogram";
+                     break;
+                  }
+               } elseif ( strpos( $ItemNumber_Upper, "SM" ) !== false ) {
+                  // either DYO or maybe vintage
+                  $MainLabelType = "SM_Mod";
+               } elseif ( strpos( $ItemNumber_Upper, "CS" ) !== false ) {
+                  // either DYO or maybe vintage
+                  $MainLabelType = "CS";
+               }
+
+               /* ok now we need to know the label shape, like 'circle20' or 'rectangle8'
+               * I know I know, the function is called get label type but we're assigning it to a variable called label shape.
+               * The function should have been called shape..
+               */
+               if ( $verbose ) {
+                  echo "\nOrderLine[itemNumber] = '" . $OrderLine["itemNumber"] . "'";
+                  echo "\nItemNumber_StringLength = '" . $ItemNumber_StringLength . "'";
+                  echo "\nsubstr = '" . substr( $OrderLine["itemNumber"], 0, $ItemNumber_StringLength - 1 ) . "'";
+               }
+
+               $LabelShape = getLabelType( $BaseItemNumber );
+
+               if ( $verbose ) {
+                  echo "\nMainLabelType = '" . $MainLabelType . "'";
+                  echo "\nLabelShape = '" . $LabelShape . "'";
+               }
+
+               if ( $LabelShape ) {
+                  if ( $verbose ) { echo " .. LabelType = '" . $LabelShape . "'"; }
+
+                  if ( $BaseItemNumber == "TAGS" || $BaseItemNumber == "STCK" ) {
+                     $dppp = "20";
+                  } else {
+                     $dppp = getCustProdField( "designsPerPrintedPage", $CustomFieldIDs["designsPerPrintedPage"], $CustomFieldData_ItemNumber, false, "pdo", $database, true );
+                  }
+
+                  switch( $LabelShape ) {
+                  case "sandalwoodFan":
+                     $LabelShape = "sunglasses";
+                     break;
+                  case "c":
+                     $LabelShape = "circle" . $dppp;
+                     break;
+                  case "tt":
+                     $LabelShape = "rectangle" . $dppp;
+                     break;
+                  case "plaque":
+                     $LabelShape = "plaque" . $dppp;
+                     break;
+                  }
+
+                  if ( $verbose ) { echo " .. Final LabelShape = '" . $LabelShape . "'"; }
+                  if ( $verbose ) { echo " .. SONumber = '" . $SONumber . "'"; }
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["SONumber"] = $SONumber;
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["ItemNumber"] = $BaseItemNumber;
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Quantity"] = $OrderLine["quantity"];
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["DesignsPerPrintedPage"] = $dppp;
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["PageCount"] = ceil( $OrderLine["quantity"] / $dppp );
+
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["BarCode_DoNotRelease"] = $BarCode_DoNotRelease;
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["BarCode_Review"] = $BarCode_Review;
+
+                  // now we can grab our js template
+                  switch( $MainLabelType ) {
+                  case "CS":
+                     switch( $LabelShape ) {
+                     case "sandalwoodFan":
+                     case "sunglasses":
+                     case "blackSunglasses":
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/sunglasses.js";
+                        break;
+                     }
+                     break;
+                  case "DYOVintage":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/vintage.js";
+                     break;
+                  case "DYOMonogram":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/monogram.js";
+                     break;
+                  case "DYO":
+                     switch( $LabelShape ) {
+                     case "sunglasses":
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/sunglasses.js";
+                        break;
+                     case "hersheysKisses":
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/hersheysKisses.js";
+                        break;
+                     case "CoffeeCupTumbler":
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/CoffeeCupTumbler.js";
+                        break;
+                     case "IceCreamScoop":
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/IceCreamScoop.js";
+                        break;
+                     case "circle108":
+                     case "cxs":
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/dyo.js";
+                        break;
+                     case "lipBalmBall":
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/lipBalmBall.js";
+                        break;
+                     default:
+                        /* 2018-06-06: The javascript needs to know which designs have text embedded. When we re-link the illustrator files for these, we will
+                        * first open the .ai file and modify it.
+                        * Here we create an array that has the IDs as keys, and a javascript statement as value. Later we'll replace a flag in the javascript with
+                        * these statements.
+                        */
+                        $where = array( "ST", "graphic" );
+                        $GetDesignsWithText = $database->prepare("SELECT graphicID FROM personalizationData WHERE itemType = ? AND entryType = ? AND graphicDefaultText != '' AND graphicDefaultText IS NOT NULL");
+                        if ( $GetDesignsWithText->execute( $where ) ) {
+                           while( $DesignWithText = $GetDesignsWithText->fetch(PDO::FETCH_ASSOC) ) {
+                              $DesignsWithText[$DesignWithText["graphicID"]] = "TextDesigns.push( '" . $DesignWithText["graphicID"] . "' );";
+                           }
+                           $DesignsWithTextJS = implode( "", $DesignsWithText );
+                        }
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/dyo.NoSymbols.js";
+                        break;
+                     }
+                     break;
+                  case "SM_Mod":
+                     switch( $LabelShape ) {
+                     case "sandalwoodFan":
+                     case "sunglasses":
+                     case "blackSunglasses":
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/sunglasses.js";
+                        break;
+                     default:
+                        $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["JSTemplatePath"] = $_SERVER["DOCUMENT_ROOT"] . "/utilities/labelData/jsTemplates/SMetc.js";
+                        break;
+                     }
+                     break;
+                  }
+
+                  // grab the original if it hasn't been grabbed yet
+                  if ( !isset( $OriginalJSTemplates[$jsTemplatePath] ) ) {
+                     $OriginalJSTemplates[$jsTemplatePath] = file_get_contents( $jsTemplatePath );
+                  }
+                  $tagCount = $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["DesignsPerPrintedPage"];
+
+                  switch( $LabelShape ) {
+                  case "circle20":
+                  case "circle30":
+                  case "circle35":
+                  case "diamond20":
+                  case "circle15":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fBlockWhite", "fModernWhite", "fHandwrittenWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Date" );
+                     break;
+                  case "circle48":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fBlockWhite", "fModernWhite", "fHandwrittenWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Date" );
+                     break;
+                  case "circle108":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fBlockWhite", "fModernWhite", "fHandwrittenWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Date" );
+                     break;
+                  case "rectangle8":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fModernHeadline", "fModernHeadlineWhite", "fModernText", "fModernTextWhite", "fBlockHeadline", "fBlockHeadlineWhite", "fBlockText", "fBlockTextWhite", "fHandwrittenHeadline", "fHandwrittenHeadlineWhite", "fHandwrittenText", "fHandwrittenTextWhite", "fScriptHeadline", "fScriptHeadlineWhite", "fScriptText", "fScriptTextWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "babyCarriage":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fModernHeadline", "fModernHeadlineWhite", "fModernText", "fModernTextWhite", "fBlockHeadline", "fBlockHeadlineWhite", "fBlockText", "fBlockTextWhite", "fHandwrittenHeadline", "fHandwrittenHeadlineWhite", "fHandwrittenText", "fHandwrittenTextWhite", "fScriptHeadline", "fScriptHeadlineWhite", "fScriptText", "fScriptTextWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Date" );
+                     break;
+                  case "rectangle9":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fModernHeadline", "fModernHeadlineWhite", "fModernText", "fModernTextWhite", "fBlockHeadline", "fBlockHeadlineWhite", "fBlockText", "fBlockTextWhite", "fHandwrittenHeadline", "fHandwrittenHeadlineWhite", "fHandwrittenText", "fHandwrittenTextWhite", "fScriptHeadline", "fScriptHeadlineWhite", "fScriptText", "fScriptTextWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "rectangle12":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fModernHeadline", "fModernHeadlineWhite", "fModernText", "fModernTextWhite", "fBlockHeadline", "fBlockHeadlineWhite", "fBlockText", "fBlockTextWhite", "fHandwrittenHeadline", "fHandwrittenHeadlineWhite", "fHandwrittenText", "fHandwrittenTextWhite", "fScriptHeadline", "fScriptHeadlineWhite", "fScriptText", "fScriptTextWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "manicure5":
+                     break;
+                  case "circle6":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fModernHeadline", "fModernHeadlineWhite", "fModernText", "fModernTextWhite", "fBlockHeadline", "fBlockHeadlineWhite", "fBlockText", "fBlockTextWhite", "fHandwrittenHeadline", "fHandwrittenHeadlineWhite", "fHandwrittenText", "fHandwrittenTextWhite", "fScriptHeadline", "fScriptHeadlineWhite", "fScriptText", "fScriptTextWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "plasticBox15":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fModernHeadline", "fModernHeadlineWhite", "fModernText", "fModernTextWhite", "fBlockHeadline", "fBlockHeadlineWhite", "fBlockText", "fBlockTextWhite", "fHandwrittenHeadline", "fHandwrittenHeadlineWhite", "fHandwrittenText", "fHandwrittenTextWhite", "fScriptHeadline", "fScriptHeadlineWhite", "fScriptText", "fScriptTextWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "luggageTag":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fModernHeadline", "fModernHeadlineWhite", "fModernText", "fModernTextWhite", "fBlockHeadline", "fBlockHeadlineWhite", "fBlockText", "fBlockTextWhite", "fHandwrittenHeadline", "fHandwrittenHeadlineWhite", "fHandwrittenText", "fHandwrittenTextWhite", "fScriptHeadline", "fScriptHeadlineWhite", "fScriptText", "fScriptTextWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "lipBalmTube":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fBlockWhite", "fModernWhite", "fHandwrittenWhite" );
+                     $lines = array( "Headline", "Date" );
+                     break;
+                  case "lipBalmBall":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fBlockWhite", "fModernWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Date" );
+                     break;
+                  case "oval":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fScript", "fBlockWhite", "fModernWhite", "fHandwrittenWhite", "fScriptWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "mintTin":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fScript", "fBlockWhite", "fModernWhite", "fHandwrittenWhite", "fScriptWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "manicureKit":
+                  case "mk":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fBlockWhite", "fModernWhite", "fHandwrittenWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "sandalwoodFan":
+                  case "sunglasses":
+                     // and fans
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fBlockWhite", "fModernWhite", "fHandwrittenWhite", "fAvantGarde" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text" );
+                     break;
+                  case "plaque12":
+                  case "plaque20":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fBlockWhite", "fModernWhite", "fHandwrittenWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text" );
+                     break;
+                  case "matchbox":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fBlock", "fModern", "fHandwritten", "fBlockWhite", "fModernWhite", "fHandwrittenWhite", "fScript", "fScriptWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Date" );
+                     break;
+                  case "hersheysKisses":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Fonts"] = array( "fChampagneAndLimousines", "fHandwritten", "fChampagneAndLimousinesWhite", "fHandwrittenWhite" );
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "CoffeeCupTumbler":
+                  case "CoffeeTumbler":
+                  case "hs": // hand sanitizer
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array( "Headline", "Text", "Date" );
+                     break;
+                  case "IceCreamScoop":
+                     $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] = array("Text");
+                     break;
+                  }
+
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["LineCount"] = sizeof( $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Lines"] );
+                  $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["ThreeLineLabel"] = $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["LineCount"] == 3;
+                  // echo "\nlineCount = '" . $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["LineCount"] . "'";
+               }
+            }
+         } elseif ( $OnValidItem ) {
+            /* ok, we're NOT on an item line, but we DID look at a valid (labelish) item recently.
+            * That means we're most likely on a description line, and we need to gather the data
+            */
+            // if the description line is ***SAMPLE*** - ignore this item
+            if ( trim( $OrderLine["data"] ) == "***SAMPLE***" ) {
+               $OnValidItem = false;
+               unset( $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey] );
+               if ( empty( $OrderData[$MainLabelType][$LabelShape] ) ) {
+                  unset( $OrderData[$MainLabelType][$LabelShape] );
+               }
+            } else {
+               CreateZip_GatherPersonalization( $database, $verbose, "Navision", $KeyLists["Navision"], $OrderData, $LabelShape, false, $OrderLine, $OrderData_ArrayKey, $MainLabelType, false );
+            }
+         }
+      } // foreach( $OrderLines as $LineNumber=>$OrderLine )
+   } // foreach( $Orders as $SONumber=>$OrderLines )
+
+
+   /* ok, at this point hopefully we have a bunch of data. Let's make some adjustments and then
+   * create the zip file.
+   */
+   if ( $verbose ) { echo "\n\nOrderData:\n\n"; var_dump( $OrderData ); echo "\n\n"; }
+   // first, do we have personalization? If not, check the web database
+
+   // note that Key2 is actually the label shape like 'circle35' or whatever
+   foreach( $OrderData as $Key_MainLabelType=>$LabelShape ) {
+      foreach( $LabelShape as $Key_SubLabelType=>$RandomKey ) {
+         foreach( $RandomKey as $Key_RandomKey=>$OrderInfo ) {
+            if ( sizeof( $OrderInfo["Personalization"] ) == 1 && isset( $OrderInfo["Personalization"]["DesignIDNumber"] ) ) {
+               // we have a design ID but nothing else. Let's check the web DB
+               CreateZip_GatherPersonalization( $database, $verbose, "DB", $KeyLists["DB"], $OrderData, $LabelShape, $OrderInfo, false, false, false, array( $Key_MainLabelType, $Key_SubLabelType, $Key_RandomKey ) );
+            }
+         }
+      }
+   }
+
+   // ok now do some replacements etc
+   $ReplaceDashes = [ "graphic", "layout" ];
+   $ReplaceDashUnderscore = [ "backgroundColor", "borderColor", "pattern", "patternColor", "font", "line1Color", "lines23Color", "DesignText" ];
+   $ReplaceUnderscore = [ "DesignIDNumber" ];
+
+   // note that Key2 is actually the label shape like 'circle35' or whatever
+   foreach( $OrderData as $Key_MainLabelType=>$LabelShape ) {
+      foreach( $LabelShape as $Key_SubLabelType=>$RandomKey ) {
+         foreach( $RandomKey as $Key_RandomKey=>$OrderInfo ) {
+
+            if ( $OrderInfo["ItemNumber"] == "9900ST" && isset( $OrderInfo["Personalization"] ) && !isset( $OrderInfo["Personalization"]["font"] ) ) {
+               // this item does not have a font choice, so just default it to block to match the printing template
+               $OrderData[$MainLabelType][$LabelShape][$OrderData_ArrayKey]["Personalization"]["font"] = "block";
+            }
+
+            // now do some replacements etc
+            foreach( $OrderInfo["Personalization"] as $Key4=>$data ) {
+               foreach( $ReplaceDashes as $ReplaceKey ) {
+                  if ( $Key4 == $ReplaceKey ) {
+                     $OrderData[$Key_MainLabelType][$Key_SubLabelType][$Key_RandomKey]["Personalization"][$Key4] = str_replace( "-", " ", $data );
+                  }
+               }
+               foreach( $ReplaceDashUnderscore as $ReplaceKey ) {
+                  if ( $Key4 == $ReplaceKey ) {
+                     $OrderData[$Key_MainLabelType][$Key_SubLabelType][$Key_RandomKey]["Personalization"][$Key4] = str_replace( ["-","_"], [" "," "], $data );
+                  }
+               }
+               foreach( $ReplaceUnderscore as $ReplaceKey ) {
+                  if ( $Key4 == $ReplaceKey ) {
+                     $OrderData[$Key_MainLabelType][$Key_SubLabelType][$Key_RandomKey]["Personalization"][$Key4] = str_replace( "_", " ", $data );
+                  }
+               }
+            }
+         }
+      }
+   }
+   if ( $verbose ) { echo "\n\nOrderData:\n\n"; var_dump( $OrderData ); echo "\n\n"; }
+
+   // ok we're done making adjustments. Time to create the zip file!
+   $zipFileTempName = tempnam("/tmp", "");
+   $zipFile = new ZipArchive();
+   if ( $zipFile->open( $zipFileTempName, ZIPARCHIVE::CREATE | ZIPARCHIVE::OVERWRITE) !== TRUE ) {
+      exit("cannot open <$filename>\n");
+   } else {
+
+      labelDataUsageLog( $database, $SONumbers, $OrderData );
+
+      // note that Key2 is actually the label shape like 'circle35' or whatever
+      foreach( $OrderData as $Key_MainLabelType=>$LabelShape ) {
+         foreach( $LabelShape as $Key_SubLabelType=>$RandomKey ) {
+            foreach( $RandomKey as $Key_RandomKey=>$OrderInfo ) {
+               if ( $verbose ) {
+                  echo "\n\nOrderInfo:\n\n"; var_dump( $OrderInfo ); echo "\n";
+               }
+               if ( !isset( $OriginalJSTemplates[$OrderInfo["JSTemplatePath"]] ) ) {
+                  if ( $verbose ) { echo "\ngetting js file contents: '" . $OrderInfo["JSTemplatePath"] . "'"; }
+                  $OriginalJSTemplates[$OrderInfo["JSTemplatePath"]] = file_get_contents( $OrderInfo["JSTemplatePath"] );
+                  if ( $verbose ) {
+                     echo " .. length = '" . strlen( $OriginalJSTemplates[$OrderInfo["JSTemplatePath"]] ) . "'";
+                  }
+               }
+               $jsTemplate = $OriginalJSTemplates[$OrderInfo["JSTemplatePath"]];
+               if ( $verbose ) { echo " .. jsTemplate length = '" . strlen( $jsTemplate ) . "'"; }
+               if ( isset( $DesignsWithTextJS ) ) {
+                  $jsTemplate = str_replace( "//PHPTEXTDESIGNSPLACEHOLDER!", $DesignsWithTextJS, $jsTemplate );
+               }
+
+               $jsTemplate = str_replace( "PRINTEDSONUMBER", $OrderInfo["SONumber"], $jsTemplate );
+               $jsTemplate = str_replace( "BARCODESONUMBER", "*" . $OrderInfo["SONumber"] . "*", $jsTemplate );
+               $jsTemplate = str_replace( "BARCODEITEMNUMBER", "*" . $OrderInfo["ItemNumber"] . "*", $jsTemplate );
+               $jsTemplate = str_replace( "BARCODEDNR", $OrderInfo["BarCode_DoNotRelease"], $jsTemplate );
+               $jsTemplate = str_replace( "BARCODEREVIEW", $OrderInfo["BarCode_Review"], $jsTemplate );
+
+               if (
+						isset( $OrderInfo["Quantity"] ) &&
+						is_numeric( $OrderInfo["Quantity"] ) &&
+						isset( $OrderInfo["DesignsPerPrintedPage"] ) &&
+						is_numeric( $OrderInfo["DesignsPerPrintedPage"] ) &&
+						isset( $OrderInfo["PageCount"] ) &&
+						is_numeric( $OrderInfo["PageCount"] )
+					) {
+						//echo "<br>replacing QUANTITYNEEDED";
+						$jsTemplate = str_replace( "\"QUANTITYNEEDED\"", $OrderInfo["Quantity"], $jsTemplate );
+						$jsTemplate = str_replace( "\"PAGESNEEDED\"", $OrderInfo["PageCount"], $jsTemplate );
+					} else {
+						//echo "<br>not replacing QUANTITYNEEDED";
+						//echo "<br>\nquantity:"; var_dump( isset( $OrderInfo["Quantity"] ) ); var_dump( is_numeric( $OrderInfo["Quantity"] ) );
+						//echo "<br>\ndesignsPerPrintedPage:"; var_dump( isset( $OrderInfo["DesignsPerPrintedPage"] ) ); var_dump( is_numeric( $OrderInfo["DesignsPerPrintedPage"] ) );
+						//echo "<br>\nquantity:"; var_dump( isset( $OrderInfo["PageCount"] ) ); var_dump( is_numeric( $OrderInfo["PageCount"] ) );
+					}
+
+               if ( $verbose ) {
+                  echo "\n .. jsTemplate length = '" . strlen( $jsTemplate ) . "'";
+                  echo "\n .. Key_MainLabelType = '" . $Key_MainLabelType . "'";
+                  echo "\n .. Key_SubLabelType = '" . $Key_SubLabelType . "'";
+               }
+               // $Key_MainLabelType is main label type, like DYO or whatever
+               switch( $Key_MainLabelType ) {
+               case "CS":
+               case "SM":
+               case "SM_Mod":
+                  $jsTemplate = str_replace( "ITEMNUMBER", $OrderInfo["ItemNumber"], $jsTemplate );
+                  $jsTemplate = str_replace( "DESIGNNAME", $OrderInfo["Personalization"]["graphic"], $jsTemplate );
+                  $jsTemplate = str_replace( "DESIGNTEXT", cleanTextForJS( $OrderInfo["Personalization"]["DesignText"] ), $jsTemplate );
+                  $jsTemplate = str_replace( "FONTSTYLE", $OrderInfo["Personalization"]["font"], $jsTemplate );
+                  $jsTemplate = str_replace( "FONT", $OrderInfo["Personalization"]["font"], $jsTemplate );
+                  $jsTemplate = str_replace( "TEXTCOLOR", $OrderInfo["Personalization"]["line1Color"], $jsTemplate );
+                  $jsTemplate = str_replace( "BACKGROUNDCOLOR", $OrderInfo["Personalization"]["backgroundColor"], $jsTemplate );
+                  $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                  $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                  $jsTemplate = str_replace( "TEXTLINE3", cleanTextForJS( $OrderInfo["Personalization"]["text3"] ), $jsTemplate );
+                  break;
+               case "DYO":
+               case "DYOVintage":
+               case "DYOMonogram":
+
+                  // alternative replacements for vintage and monogram
+                  switch( $Key_MainLabelType ) {
+                  case "DYOVintage":
+                     $jsTemplate = str_replace( "DESIGNNAME", $OrderInfo["Personalization"]["graphic"], $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "DATE", cleanTextForJS( $OrderInfo["Personalization"]["text3"] ), $jsTemplate );
+                     break;
+                  case "DYOMonogram":
+                     $jsTemplate = str_replace( "DESIGNCODE", $OrderInfo["Personalization"]["graphic"], $jsTemplate );
+                     $jsTemplate = str_replace( "HEADLINE", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text3"] ), $jsTemplate );
+                     break;
+                  }
+
+                  if ( $Key_SubLabelType == "lt" ) {
+                     $jsTemplate = str_replace( "HEADLINE", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text3"] ), $jsTemplate );
+                  }
+
+                  if ( substr( strtolower($OrderInfo["Personalization"]["graphic"]), 0, 8 ) == "monogram" ) {
+                     $monogramLetter = substr( $OrderInfo["Personalization"]["graphic"], 8, 1 );
+                     $designCode = "monogram";
+
+                     /* determine monogram color:
+                     * rule 1: make color match text line 1 color
+                     * - this means circular and diamond labels are done, because
+                     * - the monogram appears on the same background color as text lines
+                     * rule 2: if text line 2/3 color is provided, make monogram color match it
+                     * - this means rectangular labels with layout A will be correct
+                     * - this rule should not screw up rule 1 because rule 1 labels should
+                     * - not include line 2/3 color
+                     * rule 3: finally, if line2/3 color is provided AND layout is B make text opposite of pattern (stripe) color
+                     */
+
+                     // 1.
+                     $monogramColor = $OrderInfo["Personalization"]["line1Color"];
+
+                     // 2.
+                     if ( isset( $OrderInfo["Personalization"]["lines23Color"] ) && trim( $OrderInfo["Personalization"]["lines23Color"] ) != "" ) {
+                        $monogramColor = $OrderInfo["Personalization"]["lines23Color"];
+                     }
+
+                     // 3.
+                     if ( isset( $OrderInfo["Personalization"]["lines23Color"] ) && trim( $OrderInfo["Personalization"]["lines23Color"] ) != "" && $OrderInfo["Personalization"]["layout"] == "B" ) {
+                        switch( trim( strtolower( $OrderInfo["Personalization"]["patternColor"] ) ) ) {
+                        case "midnight":
+                        case "mocha":
+                           $monogramColor = "White";
+                           break;
+                        case "white":
+                           $monogramColor = "Black";
+                           break;
+                        }
+                     }
+                  } else {
+                     $monogramLetter = "";
+                     $monogramColor = "";
+                     if ( $verbose ) { echo "\ngetting logo ID for item '" . $OrderInfo["ItemNumber"] . "', graphic = '" . $OrderInfo["Personalization"]["graphic"] . "', bg color = '" . $OrderInfo["Personalization"]["backgroundColor"] . "'"; }
+                     if ( substr( strtolower( $OrderInfo["ItemNumber"] ), 4, 2 ) == "sm" ) {
+                        $optType = "SMgraphic";
+                        $labelOnly = false;
+                     } elseif ( $Key_SubLabelType == "lipBalmBall" ) {
+                        if ( $verbose ) { echo 'testing'; }
+                        $optType = false;
+                        $labelOnly = false;
+                     } else {
+                        $optType = false;
+                        $labelOnly = true;
+
+                        if ( str_replace( " ", "", strtolower($OrderInfo["Personalization"]["graphic"]) ) == "arrowheart" ) {
+                           $labelOnly = false;
+                        }
+                     }
+
+                     /*$designCode = getLogoID( $itemData["graphic"], $labelOnly, $optType, $verbose );*/
+                     if ( str_replace( " ", "", strtolower($OrderInfo["Personalization"]["graphic"]) ) != "photoupload" ) {
+                        $designCode = getDesignID( $OrderInfo["Personalization"]["graphic"], $labelOnly, $optType, $verbose );
+                     } else {
+                        $designCode = "948";
+                     }
+
+                     if ( $verbose ) { echo "\ndesignCode = '" . $designCode . "'"; }
+
+                     if ( isset( $OrderInfo["Personalization"]["DesignIDNumber"] ) && $OrderInfo["Personalization"]["DesignIDNumber"] != "" ) {
+                        if ( $verbose ) {
+                           // let's get the file names
+                           echo "\ngetting file names";
+                           echo "\nurl = '" . "http://www.fashioncraft.com/Designer/ps/GetPhotoFileNames.php?DesignID=" . $OrderInfo["Personalization"]["DesignIDNumber"] . "'";
+                        }
+                        $FileNames = json_decode( file_get_contents( "http://www.fashioncraft.com/Designer/ps/GetPhotoFileNames.php?DesignID=" . $OrderInfo["Personalization"]["DesignIDNumber"] ) );
+
+                        if ( $verbose ) {
+                           echo "\nfile names:\n";
+                           var_dump( $FileNames );
+                        }
+
+                        foreach( $FileNames as $FileKey=>$FileName ) {
+                           if ( $verbose ) {
+                              echo "\n\nFileKey = " . $FileKey . "\n";
+                              echo "\nFileName = " . $FileName . "\n";
+                              echo "\nlocation is set? '" . $Key_MainLabelType . "'/'" . $Key_SubLabelType . "'/'" . $Key_RandomKey . "'/Personalization"; if ( isset( $OrderInfo["Personalization"] ) ) { echo " .. yes"; }
+                              echo "\n\n";
+                           }
+
+                           $OrderInfo["Personalization"]["ImageFiles"][$FileKey]["FileName"] = $FileName;
+                           $OrderInfo["Personalization"]["ImageFiles"][$FileKey]["File"] = tempnam("/tmp", "");
+
+                           if ( $verbose ) {
+                              var_dump( $OrderInfo["Personalization"]["ImageFiles"][$FileKey]["File"] );
+                              echo "\nis writable?"; if ( is_writable( $OrderInfo["Personalization"]["ImageFiles"][$FileKey]["File"] ) ) { echo " .. yes"; } else { echo " .. no"; }
+                           }
+
+                           if ( $designCode == "948" ) {
+                              // Photo label -- grab all 3 images
+                              if ( $verbose ) { echo "\ngetting file contents: http://personalization.fashioncraft.com/Designer/Uploads/V2/" . $FileName . "\n"; }
+                              if ( $BytesWritten = file_put_contents( $OrderInfo["Personalization"]["ImageFiles"][$FileKey]["File"], fopen( "http://personalization.fashioncraft.com/Designer/Uploads/V2/" . $FileName,  "rb" ) ) ) {
+                                 if ( $verbose ) { echo "\nwrote '" . $BytesWritten . "' bytes"; }
+                              } else {
+                                 if ( $verbose ) { echo "\ncould not write file data\n"; var_dump( $BytesWritten ); echo "\n";  }
+                              }
+                           } elseif ( $FileKey == "Proof" ) {
+                              // Non-photo label -- only grab proof (assuming it exists)
+                              //$file_headers = @get_headers("http://personalization.fashioncraft.com/Designer/Uploads/V2/" . $FileName);
+                              if ( true ) {
+                                 // Download proofs for ALL labels
+                                 if ( $verbose ) { echo "\ngetting file contents: http://personalization.fashioncraft.com/Designer/Uploads/V2/" . $FileName . "\n"; }
+
+                                 if ( $BytesWritten = file_put_contents( $OrderInfo["Personalization"]["ImageFiles"][$FileKey]["File"], fopen( "http://personalization.fashioncraft.com/Designer/Uploads/V2/" . $FileName,  "rb" ) ) ) {
+                                    if ( $verbose ) { echo "\nwrote '" . $BytesWritten . "' bytes"; }
+                                 } else {
+                                    if ( $verbose ) { echo "\ncould not write file data\n"; var_dump( $BytesWritten ); echo "\n";  }
+                                 }
+                              }
+                           }
+
+                        }
+
+                        if ( $verbose ) {
+                           //echo "\nimage files:";
+                           //print_r( $ImageFiles ); // you really shouldn't uncomment this...
+                        }
+                     }
+                  } // stuff for graphic (monogram vs regular, get photos + design code, etc)
+
+                  if ( $verbose ) {
+                     echo "\n .. jsTemplate length = '" . strlen( $jsTemplate ) . "'";
+						}
+
+                  $jsTemplate = str_replace( "LOCATOR", $locator, $jsTemplate );
+                  $jsTemplate = str_replace( "BACKGROUNDCOLOR", $OrderInfo["Personalization"]["backgroundColor"], $jsTemplate );
+                  $jsTemplate = str_replace( "FONTSTYLE", $OrderInfo["Personalization"]["font"], $jsTemplate );
+                  $jsTemplate = str_replace( "DESIGNTEXT", cleanTextForJS( $OrderInfo["Personalization"]["DesignText"] ), $jsTemplate );
+                  $jsTemplate = str_replace( "TEXTLINE3", cleanTextForJS( $OrderInfo["Personalization"]["text3"] ), $jsTemplate );
+                  $jsTemplate = str_replace( "PATTERNNAME", $OrderInfo["Personalization"]["pattern"], $jsTemplate );
+                  $jsTemplate = str_replace( "PATTERNCOLOR", $OrderInfo["Personalization"]["patternColor"], $jsTemplate );
+                  $jsTemplate = str_replace( "ACCENTCOLOR", $OrderInfo["Personalization"]["accentColor"], $jsTemplate );
+                  $jsTemplate = str_replace( "DESIGN_FULLNAME", $OrderInfo["Personalization"]["graphic"], $jsTemplate );
+                  $jsTemplate = str_replace( "MONOGRAMCOLOR", $monogramColor, $jsTemplate );
+                  $jsTemplate = str_replace( "DESIGN_ID", $designCode, $jsTemplate );
+                  $jsTemplate = str_replace( "MONOGRAMLETTER", $monogramLetter, $jsTemplate );
+                  $jsTemplate = str_replace( "HEADLINECOLOR", $OrderInfo["Personalization"]["line1Color"], $jsTemplate );
+                  if ( $verbose ) { echo "\n .. jsTemplate length = '" . strlen( $jsTemplate ) . "'"; }
+                  if ( isset( $OrderInfo["Personalization"]["ImageFiles"] ) ) {
+                     $jsTemplate = str_replace( "CROPPEDIMAGE", $OrderInfo["Personalization"]["ImageFiles"]["FullCropped"]["FileName"], $jsTemplate );
+                     $jsTemplate = str_replace( "PROOFIMAGE", $OrderInfo["Personalization"]["ImageFiles"]["Proof"]["FileName"], $jsTemplate );
+                  }
+
+                  switch( $Key_SubLabelType ) {
+                  case "IceCreamScoop":
+                     $jsTemplate = str_replace( "DESIGNCODE", $OrderInfo["Personalization"]["graphic"], $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                     break;
+                  case "CoffeeCupTumbler":
+                     $jsTemplate = str_replace( "DESIGNCODE", $OrderInfo["Personalization"]["graphic"], $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTCOLOR", $OrderInfo["Personalization"]["line1Color"], $jsTemplate );
+                     break;
+                  case "hersheysKisses":
+                     $jsTemplate = str_replace( "DESIGNCODE", "Design_" . $designCode, $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTCOLOR", $OrderInfo["Personalization"]["line1Color"], $jsTemplate );
+                     break;
+                  case "lipBalmBall":
+                     $jsTemplate = str_replace( "DESIGNCODE", $designCode, $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                     $jsTemplate = str_replace( "TEXTCOLOR", $OrderInfo["Personalization"]["line1Color"], $jsTemplate );
+                     break;
+                  default:
+                     if ( $verbose ) { echo "\nworking on labelType '" . $Key_MainLabelType . "' / '" . $Key_SubLabelType . "'"; }
+                     switch( $Key_MainLabelType ) {
+                     case "Monogram":
+                        $jsTemplate = str_replace( "DESIGNCODE", $OrderInfo["Personalization"]["graphic"], $jsTemplate );
+                        $jsTemplate = str_replace( "HEADLINE", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                        $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                        $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text3"] ), $jsTemplate );
+                        break;
+                     default:
+                        $jsTemplate = str_replace( "DESIGNCODE", "Design_" . $designCode, $jsTemplate );
+                        if ( !isset( $OrderInfo["Personalization"]["lines23Color"] ) || trim($OrderInfo["Personalization"]["lines23Color"]) == "" ) {
+                           $jsTemplate = str_replace( "TEXTCOLOR", $OrderInfo["Personalization"]["line1Color"], $jsTemplate );
+                        } else {
+                           $jsTemplate = str_replace( "TEXTCOLOR", $OrderInfo["Personalization"]["lines23Color"], $jsTemplate );
+                        }
+                        if ( $OrderInfo["ThreeLineLabel"] ) {
+                           $jsTemplate = str_replace( "HEADLINE", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                           $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                           $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text3"] ), $jsTemplate );
+                        } else {
+                           $jsTemplate = str_replace( "TEXTLINE1", cleanTextForJS( $OrderInfo["Personalization"]["text1"] ), $jsTemplate );
+                           $jsTemplate = str_replace( "TEXTLINE2", cleanTextForJS( $OrderInfo["Personalization"]["text2"] ), $jsTemplate );
+                        }
+                        if ( $_POST["labelType"] == "Wanderlust" ) {
+                           $jsTemplate = str_replace( "BORDERCOLOR", $OrderInfo["Personalization"]["backgroundColor"], $jsTemplate );
+                        } else {
+                           $jsTemplate = str_replace( "BORDERCOLOR", $OrderInfo["Personalization"]["borderColor"], $jsTemplate );
+                        }
+                        break;
+                     } // switch( $Key_MainLabelType )
+                     break;
+                  } // switch( $Key_SubLabelType )
+                  break;
+               } // switch( $Key_MainLabelType )
+
+               if ( $verbose ) {
+                  echo "\n\n\n\n\n************************js template:****************************\n\n";
+                  var_dump( $jsTemplate );
+                  echo "\n\n\n\n\n************************END js template:****************************\n\n";
+               }
+
+               // ok now let's add what we have to the zip file
+
+               // first we have to make the name of the js file..
+               // first, handle hacks etc
+               if ( substr( $OrderInfo["ItemNumber"], 0, 4 ) == "5142" ) {
+                  $Key_SubLabelType = "HandSanitizer";
+               }
+
+               // ok now make the name
+               $jsBaseName = $OrderInfo["SONumber"];
+               $jsBaseName .= " - " . $Key_MainLabelType; // like DYO, DYOMonogram, SM, etc
+               $jsBaseName .= " - " . $Key_SubLabelType; // like circle35, rectangle12, etc
+               if ( isset( $OrderInfo["Personalization"]["layout"] ) && $OrderInfo["Personalization"]["layout"] && trim( $OrderInfo["Personalization"]["layout"] ) != "" ) {
+                  $jsBaseName .= " - Layout " . $OrderInfo["Personalization"]["layout"];
+               }
+               if ( $Key_MainLabelType == "SM_Mod" ) {
+                  $jsBaseName .= " - " . $OrderInfo["Personalization"]["backgroundColor"];
+               }
+               $jsBaseName .= " - " . $OrderInfo["ItemNumber"];
+
+               for( $i = 1; $i <= 999; $i++ ) {
+                  $jsFullName = $jsBaseName . " - " . str_pad( $i, 3, "0", STR_PAD_LEFT ) . ".js";
+                  if ( $verbose ) { echo "\njsFullName = '" . $jsFullName . "'"; }
+                  if ( !$zipFile->locateName( $jsFullName ) ) {
+                     $zipFile->addFromString( $jsFullName, $jsTemplate );
+                     break;
+                  }
+               }
+
+               if ( isset( $OrderInfo["Personalization"]["ImageFiles"] ) ) {
+                  if ( $verbose ) { echo "\nimage files detected, I will add to zip"; }
+                  foreach( $OrderInfo["Personalization"]["ImageFiles"] as $ImageType=>$ImageData ) {
+                     //echo "\n-- checking ImageType '" . $ImageType . "'";
+                     if ( file_exists( $ImageData["File"] ) && filesize( $ImageData["File"] ) ) {
+                        //echo " .. it exists and is not empty";
+                        if ( $ImageType == "Proof" ) {
+                           if ( !$zipFile->locateName( "Proofs/" ) ) {
+                              //echo " .. creating proofs directory";
+                              $zipFile->addEmptyDir("Proofs");
+                           }
+                           if ( $verbose ) { echo "\n---- now adding '" . $ImageData["File"] . "' (size '" . filesize( $ImageData["File"] ) . "') as 'Proofs/" . $ImageData["FileName"] . "'"; }
+                           //$zipFile->addFile($ImageData["File"], "Proofs/" . $ImageData["FileName"]);
+
+                           $ImageContents = file_get_contents( $ImageData["File"] );
+                           if ( $verbose ) {
+                              echo "\n-- image contents length = '" . strlen( $ImageContents ) . "'";
+                           }
+                           $zipFile->addFromString( "Proofs/" . $ImageData["FileName"], $ImageContents );
+                        } else {
+                           if ( $verbose ) { echo "\n---- now adding '" . $ImageData["File"] . "' (size '" . filesize( $ImageData["File"] ) . "') as '" . $ImageData["FileName"] . "'"; }
+                           //$zipFile->addFile($ImageData["File"], $ImageData["FileName"]);
+
+                           $ImageContents = file_get_contents( $ImageData["File"] );
+                           if ( $verbose ) {
+                              echo "\n-- image contents length = '" . strlen( $ImageContents ) . "'";
+                           }
+                           $zipFile->addFromString( $ImageData["FileName"], $ImageContents );
+                        }
+                     }
+
+                     unlink( $ImageData["File"] );
+                  }
+               }
+            } // foreach( $RandomKey as $Key_RandomKey=>$OrderInfo )
+         } // foreach( $LabelShape as $Key_SubLabelType=>$RandomKey )
+      } // foreach( $OrderData as $Key_MainLabelType=>$LabelShape )
+
+      $zipFile->close();
+      if ( !$verbose ) {
+         ob_end_clean();
+         header("Content-Type: application/zip");
+         //header("Content-Length: " . filesize( $zipFileTempName ));
+         header("Content-Disposition: attachment; filename=\"data.zip\"");
+         header("Pragma: no-cache");
+         header("Expires: 0");
+         readfile( $zipFileTempName );
+      } else {
+         echo "\nfinal zip file size: '" . filesize( $zipFileTempName ) . "'";
+      }
+   } // if zip opened
+}
+
+
+if ( $verbose ) { echo "</pre>"; }
+?>

@@ -8,7 +8,7 @@ import DirectoryView from './views/directory-view';
 
 let addIconToElement;
 
-export const checkIgnoreRemote = item => (item && !atom.project.remoteftp.checkIgnore(item.name.attr('data-path')));
+export const checkIgnoreRemote = item => (item && (item.name.attr('data-path') === '/' || (!atom.project.remoteftp.checkIgnore(item.name.attr('data-path')))));
 export const checkIgnoreLocal = item => (!atom.project.remoteftp.checkIgnore(item));
 export const checkPaths = (index, elem) => (elem.getPath ? elem.getPath() : '');
 export const hasProject = () => atom.project && atom.project.getPaths().length;
@@ -123,7 +123,7 @@ export const localFilePrepare = (fileName, currentPath) => {
 };
 
 export const traverseTree = (localPath, callback) => {
-  const list = [];
+  const list = [localFilePrepare('', localPath).file];
   const queue = [localPath];
 
   // search all files in localPath recursively

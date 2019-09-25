@@ -1,0 +1,2 @@
+<?php $prodCode = $_REQUEST["prodCode"]; ?>
+<a href="javascript:setSelection( 5, 7, 1, 'coffee-favors', 'design', 'design', 'AudreyLipstickRed' );"><img src="/images/kate-aspen/personality-favors-v2/<? echo $prodCode;?>/swatches-large/audrey-lipstick-red.jpg"></a>

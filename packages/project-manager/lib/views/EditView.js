@@ -21,8 +21,6 @@ export default class EditView {
 
     this.storeFocusedElement();
 
-    this.setFocus();
-
     this.element.addEventListener('click', (event) => {
       if (event.target === this.refs.save) {
         this.saveProject();
@@ -37,20 +35,6 @@ export default class EditView {
     disposables.add(atom.commands.add('atom-workspace', {
       'core:cancel': () => this.close(),
     }));
-  }
-
-  getFocusElement() {
-    return this.refs.title;
-  }
-
-  setFocus() {
-    const focusElement = this.getFocusElement();
-
-    if (focusElement) {
-      setTimeout(() => {
-        focusElement.focus();
-      }, 0);
-    }
   }
 
   storeFocusedElement() {
@@ -135,7 +119,7 @@ export default class EditView {
   render() {
     const defaultProps = Project.defaultProps;
     const rootPath = atom.project.getPaths()[0];
-    let props = defaultProps;
+    let props = { ...defaultProps, title: path.basename(rootPath) };
 
     if (atom.config.get('project-manager.prettifyTitle')) {
       props.title = changeCase.titleCase(path.basename(rootPath));
@@ -167,7 +151,7 @@ export default class EditView {
 
           <div className="block">
             <label className="input-label">Title</label>
-            <input ref="title" type="text" className="input-text" value={props.title} tabIndex="0" />
+            <input autofocus="true" ref="title" type="text" className="input-text" value={props.title} tabIndex="0" />
           </div>
 
           <div className="block">

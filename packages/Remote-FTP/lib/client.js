@@ -30,7 +30,6 @@ export default class Client {
 
     self.configFileName = '.ftpconfig';
     self.ignoreBaseName = '.ftpignore';
-    self.ignoreFile = null;
     self.ignoreFilter = false;
     self.watchers = [];
 
@@ -238,10 +237,10 @@ export default class Client {
 
     const extendsConfig = (json, err) => {
       if (json !== null && typeof callback === 'function') {
-        const ssconfigPath = atom.config.get('remote-ftp.connector.sshConfigPath');
+        const sshConfigPath = atom.config.get('remote-ftp.connector.sshConfigPath');
 
-        if (ssconfigPath && this.info.protocol === 'sftp') {
-          const configPath = Path.normalize(ssconfigPath.replace('~', os.homedir()));
+        if (sshConfigPath && this.info.protocol === 'sftp') {
+          const configPath = Path.normalize(sshConfigPath.replace('~', os.homedir()));
 
           FS.readFile(configPath, 'utf8', (fileErr, conf) => {
             if (fileErr) return error(fileErr);
@@ -337,8 +336,8 @@ export default class Client {
     let projectPath = null;
 
     if (multipleHostsEnabled() === true) {
-      const $selectedDir = $('.tree-view .selected');
-      const $currentProject = $selectedDir.hasClass('project-root') ? $selectedDir : $selectedDir.closest('.project-root');
+      const $currentProject = $('.tree-view .project-root');
+
       projectPath = $currentProject.find('> .header span.name').data('path');
     } else {
       const firstDirectory = atom.project.getDirectories()[0];
@@ -354,39 +353,35 @@ export default class Client {
   }
 
   getConfigPath() {
-    if (!hasProject) return false;
+    if (!hasProject()) return false;
 
     return this.getFilePath(`./${this.configFileName}`);
   }
 
   updateIgnore() {
-    if (!this.ignoreFile) {
-      this.ignorePath = this.getFilePath(this.ignoreBaseName);
-      this.ignoreFile = new File(this.ignorePath);
-    }
+    const ignorePath = this.getFilePath(this.ignoreBaseName);
+    const ignoreFile = new File(ignorePath);
 
-    if (!this.ignoreFile.existsSync()) {
-      this.ignoreFilter = false;
+    if (!ignoreFile.existsSync()) {
       return false;
     }
 
-    if (this.ignoreFile.getBaseName() === this.ignoreBaseName) {
-      this.ignoreFilter = ignore().add(this.ignoreFile.readSync(true));
-      return true;
-    }
+    this.ignoreFilter = ignore().add(ignoreFile.readSync(true));
 
-    return false;
+    return true;
   }
 
-  checkIgnore(local) {
-    let haseIgnore = true;
+  checkIgnore(filepath) {
+    const relativeFilepath = Client.toRelative(filepath);
+
+    let ignoreIsActual = true;
 
     // updateIgnore when not set or .ftpignore is saved
-    if (!this.ignoreFilter || (local === this.getFilePath(this.ignoreBaseName))) {
-      haseIgnore = this.updateIgnore();
+    if (!this.ignoreFilter || (relativeFilepath === this.getFilePath(this.ignoreBaseName))) {
+      ignoreIsActual = this.updateIgnore();
     }
 
-    if (haseIgnore && this.ignoreFilter && this.ignoreFilter.ignores(local)) {
+    if (ignoreIsActual && this.ignoreFilter.ignores(relativeFilepath)) {
       return true;
     }
 
@@ -609,6 +604,18 @@ export default class Client {
     return this;
   }
 
+  static toRelative(path) {
+    let relativePath = atom.project.relativize(path);
+
+    if (!relativePath.length) {
+      relativePath = '/';
+    } else if (relativePath[0] === '/') {
+      relativePath = relativePath.substr(1);
+    }
+
+    return relativePath;
+  }
+
   toRemote(local) {
     return Path.join(
       this.info.remote,
@@ -801,7 +808,7 @@ export default class Client {
     if (!remote) return;
 
     // Check ignores
-    if (this.checkIgnore(remote)) {
+    if (remote !== '/' && this.checkIgnore(remote)) {
       this._next();
       return;
     }
@@ -820,9 +827,9 @@ export default class Client {
         mkdirSyncRecursive(local);
 
         // remove ignored remotes
-        if (this.checkIgnore(remote)) {
+        if (this.ignoreFilter) {
           for (let i = remotes.length - 1; i >= 0; i--) {
-            if (this.ignoreFilter.ignores(remotes[i].name)) {
+            if (this.checkIgnore(remotes[i].name)) {
               remotes.splice(i, 1); // remove from list
             }
           }
@@ -919,9 +926,9 @@ export default class Client {
           }
 
           // remove ignored remotes
-          if (this.checkIgnore(remote)) {
+          if (this.ignoreFilter) {
             for (let i = remotes.length - 1; i >= 0; i--) {
-              if (this.ignoreFilter.ignores(remotes[i].name)) {
+              if (this.checkIgnore(remotes[i].name)) {
                 remotes.splice(i, 1); // remove from list
               }
             }
@@ -934,9 +941,9 @@ export default class Client {
             };
 
             // remove ignored locals
-            if (this.checkIgnore(local)) {
+            if (this.ignoreFilter) {
               for (let i = locals.length - 1; i >= 0; i--) {
-                if (this.ignoreFilter.ignores(locals[i].name)) {
+                if (this.checkIgnore(locals[i].name)) {
                   locals.splice(i, 1); // remove from list
                 }
               }
@@ -961,7 +968,15 @@ export default class Client {
               }
 
               // NOTE: Upload only if not present on remote or size differ
-              if (!nRemote || remote.size !== nLocal.size) {
+              if (!nRemote) {
+                if (nLocal.type === 'd') {
+                  this.connector.mkdir(toRemote, false, () => n());
+                } else if (nLocal.type === 'f') {
+                  this.connector.put(nLocal.name, () => n());
+                } else {
+                  n();
+                }
+              } else if (nRemote.size !== nLocal.size && nLocal.type === 'f') {
                 this.connector.put(nLocal.name, () => n());
               } else {
                 n();

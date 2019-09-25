@@ -18,6 +18,7 @@
   "autocomplete-plus":
     backspaceTriggersAutocomplete: true
   core:
+    allowPendingPaneItems: false
     customFileTypes:
       "source.json": [
         "ftpconfig"
@@ -27,19 +28,26 @@
       "linter"
     ]
     openEmptyEditorOnStart: false
+    restorePreviousWindowsOnStart: "no"
     telemetryConsent: "limited"
     themes: [
       "one-light-ui"
       "one-light-syntax"
     ]
     uriHandlerRegistration: "always"
+  "custom-title":
+    template: "<%= fileName %>fdsa<% if (projectName) { %> a-a <%= projectName %>b-b<% } else { %>asdf<% } %>"
+  "custom-window-title":
+    template: "<% if (projectName) { %><%= projectName %><% } %> - <%= fileName %> - .\\<%= relativeFilePath %>"
   editor:
     autoIndentOnPaste: false
+    fontSize: 15
     preferredLineLength: 180
     scrollPastEnd: true
     tabLength: 3
   "exception-reporting":
     userId: "440e2cab-8a62-95d1-86c2-6ee7abef895d"
+  "fold-functions": {}
   "git-clone":
     target_directory: "/My Projects/GithubProjects"
   "grammar-token-limit":
@@ -62,6 +70,9 @@
     automaticallyAddUseStatements: false
     disableBuiltinAutocompletion: false
   "php-integrator-base": {}
+  "platformio-ide-terminal":
+    style:
+      theme: "one-dark"
   "project-manager":
     showPath: false
     sortBy: "title"
@@ -78,6 +89,7 @@
   "tool-bar":
     iconSize: "16px"
   "tree-view":
+    hideVcsIgnoredFiles: false
     showOnRightSide: true
   welcome:
     showOnStartup: false

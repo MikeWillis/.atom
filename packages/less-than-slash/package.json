@@ -1,40 +1,25 @@
 {
-  "_args": [
-    [
-      {
-        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-        "scope": null,
-        "escapedName": null,
-        "name": null,
-        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-        "type": "local"
-      },
-      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-118025-87460-11kq3pu.njh4dndn29"
-    ]
-  ],
-  "_from": "..\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-  "_id": "less-than-slash@0.18.0",
-  "_inCache": true,
+  "_from": "https://www.atom.io/api/packages/less-than-slash/versions/0.19.0/tarball",
+  "_id": "less-than-slash@0.19.0",
+  "_inBundle": false,
+  "_integrity": "sha512-VVd1BrV78lXEmoSxZahzjPCEOpcFfjCWVLikl/zeLoBewr5xikLAkT6ArBnq4tti/waGrycANojLoAKtCBxkiQ==",
   "_location": "/less-than-slash",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-    "scope": null,
-    "escapedName": null,
-    "name": null,
-    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-    "type": "local"
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/less-than-slash/versions/0.19.0/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/less-than-slash/versions/0.19.0/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/less-than-slash/versions/0.19.0/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/less-than-slash/versions/0.19.0/tarball"
   },
   "_requiredBy": [
-    "#USER"
+    "#USER",
+    "/"
   ],
-  "_resolved": "file:..\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-  "_shasum": "c6988f9a5972714917ac8d8c3010292b8c2308ec",
-  "_shrinkwrap": null,
-  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118025-87460-rzicf8.v2wt57b9\\package.tgz",
-  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-118025-87460-11kq3pu.njh4dndn29",
+  "_resolved": "https://www.atom.io/api/packages/less-than-slash/versions/0.19.0/tarball",
+  "_shasum": "ce8832d0c7a7edec5ba617be0c82c1d2c243cc59",
+  "_spec": "https://www.atom.io/api/packages/less-than-slash/versions/0.19.0/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-119312-14148-1v30d90.2hdn",
   "author": {
     "name": "Matthew R Hanlon",
     "email": "mrhanlon@gmail.com",
@@ -43,6 +28,7 @@
   "bugs": {
     "url": "https://github.com/mrhanlon/less-than-slash/issues"
   },
+  "bundleDependencies": false,
   "contributors": [
     {
       "name": "MarcoThePoro",
@@ -59,8 +45,8 @@
     }
   ],
   "dependencies": {},
+  "deprecated": false,
   "description": "Adds automatic closing of HTML tags when less-than, slash (</) is typed.",
-  "devDependencies": {},
   "engines": {
     "atom": ">0.50.0"
   },
@@ -68,7 +54,6 @@
   "license": "MIT",
   "main": "./lib/less-than-slash",
   "name": "less-than-slash",
-  "optionalDependencies": {},
   "providedServices": {
     "autocomplete.provider": {
       "versions": {
@@ -76,11 +61,9 @@
       }
     }
   },
-  "readme": "# </ Less Than-Slash\n\n[![Build Status](https://travis-ci.org/mrhanlon/less-than-slash.png)](https://travis-ci.org/mrhanlon/less-than-slash)\n\nAtom.io package for closing open tags when less-than, slash (`</`) is typed, like in Sublime Text 3.\n\n\n![Less Than Slash](https://mrhanlon.github.io/images/less-than-slash.gif)\n\n## Installation\n\n`apm install less-than-slash`\n\n## Settings\n\n### Completion Mode\n\nYou can choose between _Immediate Mode_ (default) to have tags closed seamlessly after you type `</`, or _Suggest Mode_, where less-than-slash acts as a smarter [autocomplete-plus](https://github.com/atom/autocomplete-plus) provider, suggesting the appropriate closing tag when you type `</`.\n\n### Empty Tags\n\nYou can specify a list of \"Empty Tags\" to be ignored from auto-closing. The default value for \"Empty Tags\" is:\n\n`!doctype`, `br`, `hr`, `img`, `input`, `link`, `meta`, `area`, `base`, `col`, `command`, `embed`, `keygen`, `param`, `source`, `track`, `wbr`\n\nThe plugin will automatically ignore any of these self-closing tags. This is useful for frameworks like Angular.js, which allows the definition of custom elements.\n\n### Return cursor\n\nReturns the cursor to the beginning of the closing tag so you can write both the opening and closing tags before writing code in between them. (disabled by default)\n\n## Contributing\n\nPlease follow the guidelines for [Contributing to Atom](https://atom.io/docs/latest/contributing).\n",
-  "readmeFilename": "README.md",
   "repository": {
     "url": "git+https://github.com/mrhanlon/less-than-slash.git",
     "type": "git"
   },
-  "version": "0.18.0"
+  "version": "0.19.0"
 }

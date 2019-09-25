@@ -42,7 +42,15 @@
   'd_POST':
     'prefix': '\$_po'
     'body': '\$_POST["${1:Key}"]'
-
+  'CurlSetup':
+    'prefix': 'csc'
+    'body': '\$ch = curl_init();\ncurl_setopt( \$ch, CURLOPT_RETURNTRANSFER, true );\ncurl_setopt( \$ch, CURLOPT_URL, "URL_GOES_HERE" );\ncurl_setopt( \$ch, CURLOPT_POST, true );\ncurl_setopt( \$ch, CURLOPT_POSTFIELDS, $PostData );\n\$CurlResult = curl_exec( \$ch );'
+  'QuestionMarkList':
+    'prefix': 'qml'
+    'body': '\$questionMarks = implode( ",", array_fill( 0, count( \$where ), "?" ) ); // make a comma separated list of question marks, of equal length to $where\n\$update = \$database->prepare("DO WHAT YOU WANT WHERE ImportantColumn IN ( " . \$questionMarks . ")");'
+  'FindDelimiter':
+    'prefix': 'dlm'
+    'body': 'if ( strpos( trim(\$STRING), "\\\\t" ) !== false ) {\n\t\$delim = "\\\\t";\n} elseif ( strpos( trim(\$STRING), " " ) !== false ) {\n\t\$delim = " ";\n} elseif ( strpos( trim(\$STRING), "," ) !== false ) {\n\t\$delim = ",";\n} else {\n\t\$delim = false;\n}\nif ( \$delim ) {\n\t$WHATEVER = explode( $delim, trim(\$STRING) );\n}'
 
 '.source.js':
   '$ Doc Ready':
@@ -54,6 +62,12 @@
   'jQuery Loading Timer':
     'prefix': 'jql'
     'body': '(function() {\n\tvar jQueryLoading = setInterval(function() {\n\t\tif (typeof($) === "function") {\n\t\t\tclearInterval(jQueryLoading);\n\t\t\t${1://code}\n\t\t}\n\t}, 100);\n})();'
+  'Interval':
+    'prefix': 'si'
+    'body': 'var Interval = setInterval(function() {\n\tif ( ${1:WHATEVER} ) {\n\t\tclearInterval(Interval);\n\t\t${2://code}\n\t}\n}, 100);'
+  'Self-Executing Interval':
+    'prefix': 'sei'
+    'body': '(function() {\n\tvar Interval = setInterval(function() {\n\t\tif ( ${1:WHATEVER} ) {\n\t\t\tclearInterval(Interval);\n\t\t\t${2://code}\n\t\t}\n\t}, 100);\n})();'
   'Self Executing Function':
     'prefix': 'sef'
     'body': '(function(){\n\t${1://code}\n})();'

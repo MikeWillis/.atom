@@ -2,6 +2,8 @@
 //
 // See https://github.com/atom/atom-dark-ui/blob/master/styles/ui-variables.less
 // for a full listing of what's available.
+@ui-size: 1em;
+
 @import "ui-variables";
 
 .remote-ftp-view {
@@ -96,6 +98,7 @@
           flex: none;
           white-space: nowrap;
           text-align: right;
+          margin-right: 20px;
         }
       }
     }
@@ -168,7 +171,7 @@
 }
 
 .remote-ftp-view .ftptree-view.list-tree {
-  font-size: @font-size;
+  font-size: @ui-size;
   background-color: inherit;
   isolation: isolate;
   flex-grow: 1;

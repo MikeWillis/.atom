@@ -1,0 +1,42 @@
+{
+  "_from": "https://www.atom.io/api/packages/fold-functions/versions/0.11.0/tarball",
+  "_id": "fold-functions@0.11.0",
+  "_inBundle": false,
+  "_integrity": "sha512-/3yTFppZJzQ06/WuECuReaasFffhdWnqkHbBitqgZ5dtfgTYDBXgf/8J/t18oFhH9DHFcxY6HvyGjw5hCDojug==",
+  "_location": "/fold-functions",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/fold-functions/versions/0.11.0/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/fold-functions/versions/0.11.0/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/fold-functions/versions/0.11.0/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/fold-functions/versions/0.11.0/tarball"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://www.atom.io/api/packages/fold-functions/versions/0.11.0/tarball",
+  "_shasum": "9591ca2daaa91f1bfd543fe9a8d397d8373d39f5",
+  "_spec": "https://www.atom.io/api/packages/fold-functions/versions/0.11.0/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-119417-33604-wq0u61.bvly",
+  "bugs": {
+    "url": "https://github.com/robballou/atom-fold-functions/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {},
+  "deprecated": false,
+  "description": "Toggle folding on all functions",
+  "engines": {
+    "atom": ">=0.174.0 <2.0.0"
+  },
+  "homepage": "https://github.com/robballou/atom-fold-functions#readme",
+  "license": "MIT",
+  "main": "./lib/fold-functions",
+  "name": "fold-functions",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/robballou/atom-fold-functions.git"
+  },
+  "version": "0.11.0"
+}

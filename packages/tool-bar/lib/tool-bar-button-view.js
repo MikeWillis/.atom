@@ -1,7 +1,5 @@
 const {CompositeDisposable} = require('atom');
 
-let prevFocusedElm = null;
-
 module.exports = class ToolBarButtonView {
 
   constructor (options, group) {
@@ -44,7 +42,11 @@ module.exports = class ToolBarButtonView {
     }
     if (options.icon) {
       if (options.iconset) {
-        classNames.push(options.iconset, `${options.iconset}-${options.icon}`);
+        if (options.iconset.startsWith('fa')) {
+          classNames.push(options.iconset, `fa-${options.icon}`);
+        } else {
+          classNames.push(options.iconset, `${options.iconset}-${options.icon}`);
+        }
       } else {
         classNames.push(`icon-${options.icon}`);
       }
@@ -60,11 +62,11 @@ module.exports = class ToolBarButtonView {
 
     this.element.classList.add(...classNames);
 
+    this._onMouseDown = this._onMouseDown.bind(this);
     this._onClick = this._onClick.bind(this);
-    this._onMouseOver = this._onMouseOver.bind(this);
 
+    this.element.addEventListener('mousedown', this._onMouseDown);
     this.element.addEventListener('click', this._onClick);
-    this.element.addEventListener('mouseover', this._onMouseOver);
   }
 
   setEnabled (enabled) {
@@ -96,15 +98,19 @@ module.exports = class ToolBarButtonView {
       this.element.parentNode.removeChild(this.element);
     }
 
+    this.element.removeEventListener('mousedown', this._onMouseDown);
     this.element.removeEventListener('click', this._onClick);
-    this.element.removeEventListener('mouseover', this._onMouseOver);
     this.element = null;
   }
 
+  _onMouseDown (e) {
+    // Avoid taking focus so we can dispatch Atom commands with the correct target.
+    e.preventDefault();
+  }
+
   _onClick (e) {
-    getPrevFocusedElm().focus();
     if (this.element && !this.element.classList.contains('disabled')) {
-      executeCallback(this, e);
+      this.executeCallback(e);
     }
     if (e.preventDefault) {
       e.preventDefault();
@@ -112,21 +118,29 @@ module.exports = class ToolBarButtonView {
     }
   }
 
-  _onMouseOver (e) {
-    if (!document.activeElement.classList.contains('tool-bar-btn')) {
-      prevFocusedElm = document.activeElement;
+  executeCallback (e) {
+    let {callback, data} = this.options;
+    if (typeof callback === 'object' && !Array.isArray(callback) && callback) {
+      callback = getCallbackModifier(callback, e);
+    }
+    const workspaceView = atom.views.getView(atom.workspace);
+
+    // Ensure we don't try to dispatch on any target above `atom-workspace`.
+    const target = workspaceView.contains(document.activeElement)
+      ? document.activeElement
+      : workspaceView;
+
+    if (typeof callback === 'string') {
+      atom.commands.dispatch(target, callback);
+    } else if (Array.isArray(callback)) {
+      for (let i = 0; i < callback.length; i++) {
+        atom.commands.dispatch(target, callback[i]);
+      }
+    } else if (typeof callback === 'function') {
+      callback.call(this, data, target);
     }
   }
 };
-
-function getPrevFocusedElm () {
-  const workspaceView = atom.views.getView(atom.workspace);
-  if (workspaceView.contains(prevFocusedElm)) {
-    return prevFocusedElm;
-  } else {
-    return workspaceView;
-  }
-}
 
 function getTooltipPlacement () {
   const toolbarPosition = atom.config.get('tool-bar.position');
@@ -135,22 +149,6 @@ function getTooltipPlacement () {
        : toolbarPosition === 'Bottom' ? 'top'
        : toolbarPosition === 'Left' ? 'right'
        : null;
-}
-
-function executeCallback (buttonView, e) {
-  let {callback, data} = buttonView.options;
-  if (typeof callback === 'object' && !Array.isArray(callback) && callback) {
-    callback = getCallbackModifier(callback, e);
-  }
-  if (typeof callback === 'string') {
-    atom.commands.dispatch(getPrevFocusedElm(), callback);
-  } else if (Array.isArray(callback)) {
-    for (let i = 0; i < callback.length; i++) {
-      atom.commands.dispatch(getPrevFocusedElm(), callback[i]);
-    }
-  } else if (typeof callback === 'function') {
-    callback.call(buttonView, data, getPrevFocusedElm());
-  }
 }
 
 function getCallbackModifier (callback, {altKey, ctrlKey, shiftKey}) {

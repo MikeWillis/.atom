@@ -1,13 +1,13 @@
 const XRegExp = require('xregexp');
 
 const REX_LISTUNIX = XRegExp(`
-  ^(?<type>[\\-ld])
-  (?<permission>([\\-r][\\-w][\\-xstT]){3})
+  ^(?<type>[bcdelfmpSs-])
+  (?<permission>((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-])))
   (?<acl>(\\+))?\\s+
   (?<inodes>\\d+)\\s+
-  (?<owner>\\d+|\\w+\\s+\\w+|\\w+|\\S+)\\s+
-  (?<group>\\d+|\\w+\\s+\\w+|\\w+|\\S+)\\s+
-  (?<size>\\d+)\\s+
+  (?<owner>\\d+|[A-Z]{1}\\w+\\s+[A-Z]{1}\\w+|\\w+|\\S+)\\s+
+  (?<group>\\d+|[A-Z]{1}\\w+\\s+[A-Z]{1}\\w+|\\w+|\\S+)\\s+
+  (?<size>\\d+(?:,\\s*\\d*)?)\\s+
   (?<timestamp>((?<month1>\\w{3})\\s+
   (?<date1>\\d{1,2})\\s+
   (?<hour>\\d{1,2}):(?<minute>\\d{2}))|

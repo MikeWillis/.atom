@@ -1,43 +1,29 @@
 {
-  "_args": [
-    [
-      {
-        "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-        "scope": null,
-        "escapedName": null,
-        "name": null,
-        "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-        "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-        "type": "local"
-      },
-      "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-118429-8984-15yvo3n.gaicin3ik9"
-    ]
-  ],
-  "_from": "..\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-  "_id": "project-manager@3.3.6",
-  "_inCache": true,
+  "_from": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
+  "_id": "project-manager@3.3.7",
+  "_inBundle": false,
+  "_integrity": "sha512-l8T0uTwS/CDzcdGTmA3pJf0BP0q8tdTaO1LSmZY3wR4RkQW4IKsxUjqrx0gffEN3vQ7+1ljZMWyyKDqDGQP2PQ==",
   "_location": "/project-manager",
   "_phantomChildren": {},
   "_requested": {
-    "raw": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-    "scope": null,
-    "escapedName": null,
-    "name": null,
-    "rawSpec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-    "spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-    "type": "local"
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball"
   },
   "_requiredBy": [
-    "#USER"
+    "#USER",
+    "/"
   ],
-  "_resolved": "file:..\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-  "_shasum": "bf0e5b7f45f3ce90ee9f46ce250cc818fc7f5413",
-  "_shrinkwrap": null,
-  "_spec": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\d-118429-8984-au5ri8.af1g7gb9\\package.tgz",
-  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-118429-8984-15yvo3n.gaicin3ik9",
+  "_resolved": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
+  "_shasum": "2f58df5cce229aca7cb50dc9d25e9883c7c72455",
+  "_spec": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-119315-6176-59rga3.hq4md",
   "bugs": {
     "url": "https://github.com/danielbrodin/atom-project-manager/issues"
   },
+  "bundleDependencies": false,
   "configSchema": {
     "showPath": {
       "type": "boolean",
@@ -96,6 +82,7 @@
     "underscore-plus": "^1.6.6",
     "untildify": "^3.0.2"
   },
+  "deprecated": false,
   "description": "Project Manager for easy access and switching between projects in Atom.",
   "devDependencies": {
     "babel-eslint": "^7.0.0",
@@ -117,7 +104,6 @@
   "license": "MIT",
   "main": "./lib/project-manager",
   "name": "project-manager",
-  "optionalDependencies": {},
   "providedServices": {
     "project-manager": {
       "description": "Get access to all saved projects",
@@ -126,8 +112,6 @@
       }
     }
   },
-  "readme": "# Project Manager\n[![Build status](https://travis-ci.org/danielbrodin/atom-project-manager.svg?branch=master)](https://travis-ci.org/danielbrodin/atom-project-manager/)\n[![apm](https://img.shields.io/apm/dm/project-manager.svg)](https://atom.io/packages/project-manager)\n[![apm](https://img.shields.io/apm/v/project-manager.svg)]()\n\n[![Paypal Donations](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=DR4XQWAZV6M2A&lc=SE&item_name=Project%20Manager&item_number=atom%2dproject%2dmanager&currency_code=EUR&bn=PP%2dDonationsBF%3abtn_donate_SM%2egif%3aNonHosted) a :beer: if you enjoy using the [project manager](https://github.com/danielbrodin/atom-project-manager) :)\n\n![Project Manager](https://raw.github.com/danielbrodin/atom-project-manager/master/project-manager.gif)\n\n\nGet easy access to all your projects and manage them with project specific settings and options.\n\n## Install\n```\n$ apm install project-manager\n```\nYou can also open Atom and go to Preferences > Install and search for `project-manager`\n\n\n## Use\n### List Projects\n`ctrl-cmd-p` (mac) / `alt-shift-P` (win & linux) or `Project Manager: List Projects` in the Command Palette.\n\nProjects can be filtered by `title`, `group` and `template` by typing `group: atom` which would give all projects with the `atom` group.\n\n\n### Save Project\n`Project Manager: Save Project` in the Command Palette and write the title you want to save the project as.\n\n### Edit Project\n`Project Manager: Edit Project` will open a page where you can edit the current project. It currently only supports certain fields.\n\n### Edit Projects\nAll projects are saved in a `.cson` file which you can easily reach by searching for `Project Manager: Edit Projects` in the Command Palette.\n\n## Project Settings\n\nsetting    | Type      | Description                                                                                                                                           | Default               \n-----------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------\n`title`    | `string`  | Projects title. Used in the projects list                                                                                                | `''`                  \n`paths`    | `array`   | The folders that will open in the tree view. First path is the main one that counts as the project.                                                   | `[]`                  \n`settings` | `Object`  | Enables you to set project specific settings. Everything that goes in the `config.cson` file can go here. It also supports scoped settings.           | `{}`                  \n`icon`     | `string`  | Icon that shows in the projects list. It's class-based so can either be a class already provided by Atom like `icon-squirrel` or a class of your own. You can find a list of all icons on [octicons.github.com](https://octicons.github.com/). | `'icon-chevron-right'`\n`devMode`  | `boolean` | `true` if project should open in dev mode. [Look here][devMode] for more info.                                                                        | `false`               \n`group`    | `string`  | Adds a group to the projects list that can be used to group and filter projects                                                                       | `null`                \n`template` | `string`  | If you add a project in the `projects.cson` file without `paths` it will count as a template. This way you can easily share settings between projects | `null`                \n\n### Local settings file\nAll these settings can be added to a `project.cson` file in the root folder of the project. It follows the below example, but without the array.\n\n### Example\n```coffeescript\n[\n  {\n    title: 'Project Manager'\n    group: 'Atom'\n    paths: [\n      '/path/to/project-manager'\n    ]\n    devMode: true\n    settings:\n      'editor.tabLength': 4\n      'editor.showInvisibles': true\n  }\n]\n\n```\n\n## Provider\nIf you want to use the projects available through the Project Manager you can use the provided methods.\n\n```javascript\nfunction consumeProjectManager({ getProjects, getProject, saveProject, openProject } => {\n  /**\n   * Get an array containing all projects.\n   * The callback will be run each time a project is added.\n   * Returns a Disposable.\n   */\n  disposables.add( getProjects(projects => {\n    // Do something with the projects.\n  }));\n\n  /**\n   * Get the currently active project.\n   * The callback will be run whenever the active project changes.\n   * Returns a Disposable.\n   */\n  disposables.add( getProject(project => {\n    if (project) {\n      // We have an active project.\n    } else {\n      // Project is either not loaded yet, or there is no project saved.\n    }\n  }));\n\n  /**\n   * Can take either a project recieved from getProjects/getProject or\n   * just an object with the props for a new project.\n   */\n  saveProject(project);\n\n  /**\n   * Will open the project.\n   * `openInSameWindow` should be true if the project should open up in the\n   * current window.\n   */\n  openProject(project, openInSameWindow);\n});\n\n```\n\n\n## Contribute\nIf you would like to contribute to the project manager, be it new features or bugs,\nplease do the following:\n\n1. Fork the repository\n2. Create a new topic branch off the master branch that describe what it does\n3. Commit and push the branch\n4. Make a pull request describing what you have done\n5. Now it will hopefully get merged :)\n\nAll PR's should:\n- Pass the [eslint](https://atom.io/packages/linter-eslint) linter\n- Add a test when it makes sense, which should be most of the time\n\n[devMode]: https://atom.io/docs/api/v1.11.2/AtomEnvironment#instance-open\n",
-  "readmeFilename": "README.md",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/danielbrodin/atom-project-manager.git"
@@ -135,5 +119,5 @@
   "scripts": {
     "test": "apm test && ./node_modules/.bin/eslint lib/**"
   },
-  "version": "3.3.6"
+  "version": "3.3.7"
 }

@@ -1,3 +1,40 @@
+## 2.9.4 - PlatformIO
+
+* add compatibility for Atom Electron 3.x builds
+
+## 2.9.3 - PlatformIO
+
+* Fix broken terminal
+
+## 2.9.2 - PlatformIO
+
+* Add compatibility for Atom 1.39
+
+## 2.9.1 - PlatformIO
+
+* Add "solarized-light" theme
+* Fix an issue with a shortcut when reopening last item and new terminal for macOS
+
+## 2.9.0 - PlatformIO
+
+* Use current Atom styles for standard theme (issue #607)
+* Switch to "node-pty-prebuilt" (issues #551, #585, #632)
+
+## 2.8.4 - PlatformIO
+
+* Add city-lights theme
+* atom-space-pen-views: bump to v2.2.0
+
+## 2.8.3 - PlatformIO
+
+* Add compatibility for Atom 1.28
+
+## 2.8.2 - PlatformIO
+
+* Remove the 3D shadow (#535)
+* Fix "Copy and Paste" (#523)
+* Fix to enable insert-selected-text on Mac (#534)
+
 ## 2.8.1 - PlatformIO
 
 * Add compatibility with Atom 1.25

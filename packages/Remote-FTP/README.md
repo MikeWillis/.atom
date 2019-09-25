@@ -1,7 +1,4 @@
 # Remote FTP
-[![Backers on Open Collective](https://opencollective.com/remote-ftp/backers/badge.svg)](#backers)
- [![Sponsors on Open Collective](https://opencollective.com/remote-ftp/sponsors/badge.svg)](#sponsors) 
-
 FTP/FTPS/SFTP client for Atom.io
 
 ![Screenshot](https://raw.githubusercontent.com/icetee/remote-ftp/master/screenshot.png "Screenshot")
@@ -13,6 +10,8 @@ FTP/FTPS/SFTP client for Atom.io
 3. **Create a configuration file** for your project (Packages -> Remote FTP -> Create (s)FTP config file)
 4. Once connected you should be seeing the content of the remote connection
 5. **All** basic **commands** (`connect`, `disconnect`, ...) are **available from** the **sidebar context menu** and the Command Palette
+
+Tip: **Create an ignore file** to prevent your sensitive information from getting synced to your host (Packages -> Remote FTP -> Create ignore file)
 
 ## Keyboard shortcuts
 
@@ -54,9 +53,9 @@ There are some settings hidden in the package preferences!
     "keyboardInteractive": false, // boolean - Set to true for enable verifyCode dialog. Keyboard interaction authentication mechanism. For example using Google Authentication (Multi factor)
     "keyboardInteractiveForPass": false, // boolean - Set to true for enable keyboard interaction and use pass options for password. No open dialog.
     "watch":[ // array - Paths to files, directories, or glob patterns that are watched and when edited outside of the atom editor are uploaded. Default : []
-        "./dist/stylesheets/main.css", // reference from the root of the project.
-        "./dist/stylesheets/",
-        "./dist/stylesheets/*.css"
+        "dist/stylesheets/main.css", // reference from the root of the project.
+        "dist/stylesheets/",
+        "dist/stylesheets/*.css"
     ],
     "watchTimeout":500, // integer - The duration ( in milliseconds ) from when the file was last changed for the upload to begin.
     "filePermissions":"0644" // string - Permissions for uploaded files. WARNING: if this option is set, previously set permissions on the remote are overwritten!
@@ -80,9 +79,9 @@ There are some settings hidden in the package preferences!
     "pasvTimeout": 10000, // integer - How long (in milliseconds) to wait for a PASV data connection to be established. Default: 10000
     "keepalive": 10000, // integer - How often (in milliseconds) to send a 'dummy' (NOOP) command to keep the connection alive. Default: 10000\. If set to 0, keepalive is disabled.
     "watch":[ // array - Paths to files, directories, or glob patterns that are watched and when edited outside of the atom editor are uploaded. Default : []
-        "./dist/stylesheets/main.css", // reference from the root of the project.
-        "./dist/stylesheets/",
-        "./dist/stylesheets/*.css"
+        "dist/stylesheets/main.css", // reference from the root of the project.
+        "dist/stylesheets/",
+        "dist/stylesheets/*.css"
     ],
     "watchTimeout":500 // integer - The duration ( in milliseconds ) from when the file was last changed for the upload to begin.
 }
@@ -151,30 +150,3 @@ Help us bring this project to the moon! Atom's rocket needs to get somewhere, ri
 [@lioutikov](https://github.com/lioutikov)
 [@zlibra](https://github.com/zlibra)  
 [@maxswjeon](https://github.com/maxswjeon)  
-
-
-
-
-## Backers
-
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/remote-ftp#backer)]
-
-<a href="https://opencollective.com/remote-ftp#backers" target="_blank"><img src="https://opencollective.com/remote-ftp/backers.svg?width=890"></a>
-
-
-## Sponsors
-
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/remote-ftp#sponsor)]
-
-<a href="https://opencollective.com/remote-ftp/sponsor/0/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/1/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/2/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/3/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/4/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/5/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/6/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/7/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/8/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/remote-ftp/sponsor/9/website" target="_blank"><img src="https://opencollective.com/remote-ftp/sponsor/9/avatar.svg"></a>
-
-

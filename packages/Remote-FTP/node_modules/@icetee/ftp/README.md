@@ -195,3 +195,7 @@ Methods
 * **restart**(< _integer_ >byteOffset, < _function_ >callback) - _(void)_ - Sets the file byte offset for the next file transfer action (get/put) to `byteOffset`. `callback` has 1 parameter: < _Error_ >err.
 
 * **mlsd**([< _string_ >path, ][< _boolean_ >useCompression, ]< _function_ >callback) - _(void)_ - Retrieves the directory listing of `path`. `path` defaults to the current working directory. `useCompression` defaults to false. `callback` has 2 parameters: < _Error_ >err, < _array_ >list. See the `list` command for a list of properties. Also see https://tools.ietf.org/html/rfc3659 7.2.
+
+### Draft commands (draft-somers-ftp-mfxx-04)
+
+* **setLastMod**(< _string_ >path, < _Date_ >date, < _function_ >callback) - _(void)_ - Set modification time for `path`. `callback` has 1 parameter: < _Error_ >err.

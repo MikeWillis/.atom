@@ -1,0 +1,63 @@
+{
+  "_from": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
+  "_id": "split-diff@1.6.0",
+  "_inBundle": false,
+  "_integrity": "sha512-JJKhctzI4XftADn8hH8tRzdPQplRl/Dky42mlzI48bCPaV3PQ6UcOvcbkKzQv1K1Bl3oP2sc/0vx5gSpy30qJw==",
+  "_location": "/split-diff",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
+  "_shasum": "ad8e60e8cdc56cbe8cf76b86a81df1392e1ab410",
+  "_spec": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-119623-26052-317g4c.yn82b",
+  "bugs": {
+    "url": "https://github.com/mupchrch/split-diff/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "diff": "latest"
+  },
+  "deprecated": false,
+  "description": "A split pane diff tool.",
+  "engines": {
+    "atom": ">= 1.19 < 2.0.0"
+  },
+  "homepage": "https://github.com/mupchrch/split-diff#readme",
+  "keywords": [
+    "diff",
+    "git",
+    "split",
+    "compare",
+    "panes",
+    "files",
+    "lines",
+    "code",
+    "difference",
+    "visual"
+  ],
+  "license": "MIT",
+  "main": "./lib/split-diff",
+  "name": "split-diff",
+  "providedServices": {
+    "split-diff": {
+      "versions": {
+        "1.0.0": "provideSplitDiff"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mupchrch/split-diff.git"
+  },
+  "version": "1.6.0"
+}

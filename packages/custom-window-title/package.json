@@ -1,0 +1,53 @@
+{
+  "_from": "https://www.atom.io/api/packages/custom-window-title/versions/1.0.4/tarball",
+  "_id": "custom-window-title@1.0.4",
+  "_inBundle": false,
+  "_integrity": "sha512-ZjJju4n2vLPlpF4tDEcdDSyoyiF+VHGFBTplDj+Ayy8W96BIBXo7l7uNrPMzxwfj49ZNB5w82ARD1O0dnOI3Sw==",
+  "_location": "/custom-window-title",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/custom-window-title/versions/1.0.4/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/custom-window-title/versions/1.0.4/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/custom-window-title/versions/1.0.4/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/custom-window-title/versions/1.0.4/tarball"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://www.atom.io/api/packages/custom-window-title/versions/1.0.4/tarball",
+  "_shasum": "ac7dcc0b88f6c57890fc3ad124902876a10ead71",
+  "_spec": "https://www.atom.io/api/packages/custom-window-title/versions/1.0.4/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-11956-5624-vg7gyj.itol",
+  "bugs": {
+    "url": "https://github.com/pixilz/custom-window-title/issues"
+  },
+  "bundleDependencies": false,
+  "consumedServices": {
+    "project-manager": {
+      "versions": {
+        "^3.1.0": "consumeProjectManager"
+      }
+    }
+  },
+  "dependencies": {
+    "event-kit": "^0.7.2",
+    "loophole": "^1.0.0",
+    "underscore": "^1.6.0"
+  },
+  "deprecated": false,
+  "description": "Set your own template for Atom's title bar.",
+  "engines": {
+    "atom": ">0.136.0"
+  },
+  "homepage": "https://github.com/pixilz/custom-window-title#readme",
+  "license": "MIT",
+  "main": "./lib/custom-window-title",
+  "name": "custom-window-title",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pixilz/custom-window-title.git"
+  },
+  "version": "1.0.4"
+}

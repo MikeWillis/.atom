@@ -108,7 +108,8 @@ class Parser extends EventEmitter {
         acl: (retUnix.acl === '+'),
         owner: retUnix.owner,
         group: retUnix.group,
-        size: parseInt(retUnix.size, 10),
+        size: (retUnix.size && retUnix.size.indexOf(',') === -1) ? parseInt(retUnix.size, 10) : 0,
+        pointer: (retUnix.size && retUnix.size.indexOf(',') > -1) ? retUnix.size.replace(/\s+/g, '') : undefined,
         date: undefined,
       };
 

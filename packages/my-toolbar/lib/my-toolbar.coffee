@@ -71,14 +71,28 @@ module.exports =
         'tooltip': 'Beautify All'
         'iconset': 'fa'
 
+    @toolBar.addSpacer()
+
     @toolBar.addButton
-      'icon': 'level-up'
+      icon: 'compress'
+      callback: 'fold-functions:fold'
+      tooltip: 'Collapse (Fold) Functions'
+      iconset: 'fa'
+
+    @toolBar.addButton
+      icon: 'expand'
+      callback: 'fold-functions:unfold'
+      tooltip: 'Collapse (Fold) Functions'
+      iconset: 'fa'
+
+    @toolBar.addButton
+      'icon': 'level-up-alt'
       'callback': 'editor:fold-all'
       'tooltip': 'Fold all'
       'iconset': 'fa'
 
     @toolBar.addButton
-      'icon': 'level-down'
+      'icon': 'level-down-alt'
       'callback': 'editor:unfold-all'
       'tooltip': 'Unfold all'
       'iconset': 'fa'
@@ -193,7 +207,7 @@ module.exports =
         iconset: 'fa'
 
     @toolBar.addButton
-        icon: 'plus-square-o'
+        icon: 'ellipsis-h'
         callback: 'editor:fold-selection'
         tooltip: 'Collapse (Fold) Section'
         iconset: 'fa'

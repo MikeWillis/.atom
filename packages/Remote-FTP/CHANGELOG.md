@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+## [2.2.2] - 2018-11-20
+
+## Fixed
++ Add default @ui-size value [#1222](https://github.com/icetee/remote-ftp/issues/1222)
+
+## [2.2.1] - 2018-11-17
+
+## Changed
++ Remove Open Collective [#1220](https://github.com/icetee/remote-ftp/issues/1220)
++ Upgrade npm packages
++ Add more base keybinds [#1171](https://github.com/icetee/remote-ftp/issues/1171)
++ Upgrade SSH2 version [#1189](https://github.com/icetee/remote-ftp/issues/1189)
+
+## Fixed
++ Fix [#1151](https://github.com/icetee/remote-ftp/issues/1151)
++ Fix directory "Copy name" function
++ Fix eta position
++ Fix [#1184](https://github.com/icetee/remote-ftp/issues/1184)
++ More accurate element search [#1213](https://github.com/icetee/remote-ftp/issues/1213)
++ Sometimes did not sync the root folder in the 'Sync local <- remote' command
+
 ## [2.2.0] - 2018-05-19
 
 ## Changed
