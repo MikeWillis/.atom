@@ -1,0 +1,80 @@
+[
+  {
+    title: "Fashioncraft"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Fashioncraft\\website\\fashioncraft.com"
+    ]
+  }
+  {
+    title: "Wamp"
+    paths: [
+      "C:\\wamp64\\www"
+    ]
+  }
+  {
+    title: "FF"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Favor Favor\\website"
+    ]
+  }
+  {
+    title: "NPF"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Nice Price Favors\\website"
+    ]
+  }
+  {
+    title: "FFB"
+    paths: [
+      "G:\\Mike\\!MyProjects\\Favor Favor Baby\\website"
+    ]
+  }
+  {
+    title: "Wamp Dropbox"
+    paths: [
+      "C:\\Users\\Mike W\\Dropbox\\Nav2016\\WebServices\\www"
+    ]
+  }
+  {
+    title: "Fashioncraft Personalization"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Fashioncraft\\website\\personalization.fashioncraft.com\\var\\www"
+    ]
+  }
+  {
+    title: "Miva Modules"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\MivaScript\\Modules"
+    ]
+  }
+  {
+    title: "Node Projects"
+    paths: [
+      "C:\\My Projects\\NodeProjects"
+    ]
+  }
+  {
+    title: "FC Designer"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Fashioncraft\\website\\fashioncraft.com\\htdocs\\Designer"
+    ]
+  }
+  {
+    title: "FC OrderInput"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Fashioncraft\\website\\fashioncraft.com\\htdocs\\ps\\order"
+    ]
+  }
+  {
+    title: "dev.fashioncraft.com"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Fashioncraft\\website\\dev.fashioncraft.com"
+    ]
+  }
+  {
+    title: "Miva LSK"
+    paths: [
+      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\MivaScript\\LSK"
+    ]
+  }
+]
