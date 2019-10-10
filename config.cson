@@ -27,7 +27,7 @@
       "php-integrator-base"
       "linter"
     ]
-    openEmptyEditorOnStart: false
+    openEmptyEditorOnStart: true
     restorePreviousWindowsOnStart: "no"
     telemetryConsent: "limited"
     themes: [

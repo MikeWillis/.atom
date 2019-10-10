@@ -1,25 +1,25 @@
 {
-  "_from": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
-  "_id": "project-manager@3.3.7",
+  "_from": "https://www.atom.io/api/packages/project-manager/versions/3.3.8/tarball",
+  "_id": "project-manager@3.3.8",
   "_inBundle": false,
-  "_integrity": "sha512-l8T0uTwS/CDzcdGTmA3pJf0BP0q8tdTaO1LSmZY3wR4RkQW4IKsxUjqrx0gffEN3vQ7+1ljZMWyyKDqDGQP2PQ==",
+  "_integrity": "sha512-7NWUhRuImndEgKL9egmpk+bUYjxtuPu7iHH1Svjl5bvZiYaJpUv+R1N46YD3FJqYBCJHAdRaq7D5SU3E5/UXew==",
   "_location": "/project-manager",
   "_phantomChildren": {},
   "_requested": {
     "type": "remote",
-    "raw": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
-    "rawSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
-    "saveSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
-    "fetchSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball"
+    "raw": "https://www.atom.io/api/packages/project-manager/versions/3.3.8/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.8/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.8/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/project-manager/versions/3.3.8/tarball"
   },
   "_requiredBy": [
     "#USER",
     "/"
   ],
-  "_resolved": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
-  "_shasum": "2f58df5cce229aca7cb50dc9d25e9883c7c72455",
-  "_spec": "https://www.atom.io/api/packages/project-manager/versions/3.3.7/tarball",
-  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-119315-6176-59rga3.hq4md",
+  "_resolved": "https://www.atom.io/api/packages/project-manager/versions/3.3.8/tarball",
+  "_shasum": "3589919bc89448c5b69e9feee45b421b9b94ec1f",
+  "_spec": "https://www.atom.io/api/packages/project-manager/versions/3.3.8/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-119910-26684-jvgkas.zqmgp",
   "bugs": {
     "url": "https://github.com/danielbrodin/atom-project-manager/issues"
   },
@@ -119,5 +119,5 @@
   "scripts": {
     "test": "apm test && ./node_modules/.bin/eslint lib/**"
   },
-  "version": "3.3.7"
+  "version": "3.3.8"
 }

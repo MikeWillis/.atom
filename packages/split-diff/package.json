@@ -1,25 +1,25 @@
 {
-  "_from": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
-  "_id": "split-diff@1.6.0",
+  "_from": "https://www.atom.io/api/packages/split-diff/versions/1.6.1/tarball",
+  "_id": "split-diff@1.6.1",
   "_inBundle": false,
-  "_integrity": "sha512-JJKhctzI4XftADn8hH8tRzdPQplRl/Dky42mlzI48bCPaV3PQ6UcOvcbkKzQv1K1Bl3oP2sc/0vx5gSpy30qJw==",
+  "_integrity": "sha512-oA3VX7K6/jmgOiXlFdorVggUmOQ4J4MV1RfNuvjcFlN3Q6aduvI0IoA36xoRqHhWtnIABEK+5c73uRVOYpJT2A==",
   "_location": "/split-diff",
   "_phantomChildren": {},
   "_requested": {
     "type": "remote",
-    "raw": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
-    "rawSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
-    "saveSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
-    "fetchSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball"
+    "raw": "https://www.atom.io/api/packages/split-diff/versions/1.6.1/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.1/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.1/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/split-diff/versions/1.6.1/tarball"
   },
   "_requiredBy": [
     "#USER",
     "/"
   ],
-  "_resolved": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
-  "_shasum": "ad8e60e8cdc56cbe8cf76b86a81df1392e1ab410",
-  "_spec": "https://www.atom.io/api/packages/split-diff/versions/1.6.0/tarball",
-  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-119623-26052-317g4c.yn82b",
+  "_resolved": "https://www.atom.io/api/packages/split-diff/versions/1.6.1/tarball",
+  "_shasum": "91b5f15bbaf3d288590e80241bb5a341348ab3b9",
+  "_spec": "https://www.atom.io/api/packages/split-diff/versions/1.6.1/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-119910-8172-idap4i.s4kw",
   "bugs": {
     "url": "https://github.com/mupchrch/split-diff/issues"
   },
@@ -59,5 +59,5 @@
     "type": "git",
     "url": "git+https://github.com/mupchrch/split-diff.git"
   },
-  "version": "1.6.0"
+  "version": "1.6.1"
 }

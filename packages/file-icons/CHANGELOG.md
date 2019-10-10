@@ -3,7 +3,27 @@ Change Log
 All notable changes to the project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-[Unpublished]: https://github.com/file-icons/atom/compare/v2.1.33...HEAD
+[Unpublished]: https://github.com/file-icons/atom/compare/v2.1.35...HEAD
+
+
+[v2.1.35] - 2019-08-21
+----------------------
+### Added
+- **New icons:** AffectScript (`.affect`), Alacritty (`.alacritty.yml`, `.config/alacritty` folders), Biml (`.biml`), BNF (`.abnf`, `.bnf`, `.ebnf`), MELPA, NSRI (`.nsri{rc,ignore}{,.{{,config.}js,json,yml,yaml}}`, `.integrity.json`), PineScript (`.pine`), PyUp (`.pyup`, `.pyup.{yml,yaml}`), Renovate (`.renovaterc.json`, `renovate.json`), V (`.v`, `.vh`)
+- **Support:** Sequelize (`.sequelizerc.{js,json}`)
+
+[v2.1.35]: https://github.com/file-icons/atom/releases/tag/v2.1.35
+
+
+
+[v2.1.34] - 2019-08-13
+----------------------
+### Added
+- **Support:** Atom (`.atom-ci` folders), Data (`.aff`, `.dic`, `.dict`, `.snippet`, `.snippets`, `.snip`), Images (`.gsrc`, `.grn`), Istanbul (`.nycrc.{yml,yaml}`, `nyc.config.js`, `.nyc_output` folders), Minecraft (`.mclevel`, `.mcpack`, `.mcworld`)
+- Test-file icons to numbered JS/TS files inside a directory named `test{s}` or `spec{s}`
+
+[v2.1.34]: https://github.com/file-icons/atom/releases/tag/v2.1.34
+
 
 
 [v2.1.33] - 2019-06-01
