@@ -236,7 +236,7 @@
     "delegato": "^1.0.0",
     "event-kit": "2.x",
     "fs-plus": "2.x",
-    "minimatch": "0.3.x",
+    "minimatch": "3.0.x",
     "underscore-plus": "1.x"
   },
   "description": "A package to display colors in project and files.",
@@ -1162,7 +1162,7 @@
           "delegato": "^1.0.0",
           "event-kit": "2.x",
           "fs-plus": "2.x",
-          "minimatch": "0.3.x",
+          "minimatch": "3.0.x",
           "underscore-plus": "1.x"
         }
       },
