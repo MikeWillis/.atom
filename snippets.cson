@@ -40,10 +40,10 @@
     'prefix': 'iff'
     'body': 'if ( ${1:condition} ) {\n\t${0:# code...}\n}\n'
   'd_REQUEST':
-    'prefix': '\$_re'
+    'prefix': '\req'
     'body': '\$_REQUEST["${1:Key}"]'
   'd_POST':
-    'prefix': '\$_po'
+    'prefix': '\pos'
     'body': '\$_POST["${1:Key}"]'
   'CurlSetup':
     'prefix': 'csc'
