@@ -29,7 +29,10 @@
     'body': 'fetchAll(PDO::FETCH_ASSOC)'
   'pre var_dump':
     'prefix': 'pvd'
-    'body': 'echo "<pre>"; var_dump( ${1:$var} ); echo "</pre>";'
+    'body': 'echo "<pre>\\\\n\\\\${1:$var}:\\\\n"; var_dump( ${1:$var} ); echo "</pre>";'
+  'echo var_dump':
+    'prefix': 'evd'
+    'body': 'echo "\\\\n\\\\${1:$var}:\\\\n"; var_dump( ${1:$var} ); echo "\\\\n";'
   'pre print_r':
     'prefix': 'ppr'
     'body': 'echo "<pre>"; print_r( ${1:$var} ); echo "</pre>";'

@@ -52,6 +52,7 @@
     'ctrl-[': 'custom:bracketize'
     'ctrl-alt-s': 'bracket-matcher:select-inside-brackets'
     'ctrl-shift-H': 'atom-html-preview:toggle'
+    'shift-backspace': 'bracket-matcher:remove-matching-brackets'
 
 'body':
   'ctrl-tab ^ctrl': 'unset!'

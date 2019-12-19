@@ -174,10 +174,10 @@ module.exports =
     commentBlock = atom.config.get('tool-bar-shortcuts.commentBlock')
 
     @toolBar.addButton
-        icon: 'pound'
+        icon: 'hashtag'
         callback: 'editor:toggle-line-comments'
         tooltip: 'Comment Line (toggle)'
-        iconset: 'ion'
+        iconset: 'fa'
 
     if commentBlock
             @toolBar.addButton
@@ -215,16 +215,16 @@ module.exports =
     @toolBar.addSpacer()
 
     @toolBar.addButton
-      icon: 'navicon-round'
+      icon: 'swatchbook'
       callback: 'command-palette:toggle'
       tooltip: 'Toggle Command Palette'
-      iconset: 'ion'
+      iconset: 'fa'
 
-    @toolBar.addButton
-        icon: 'refresh'
-        callback: 'window:reload'
-        tooltip: 'Reload Window'
-        iconset: 'ion'
+     @toolBar.addButton
+         icon: 'sync'
+         callback: 'window:reload'
+         tooltip: 'Reload Window'
+         iconset: 'fa'
 
     @toolBar.addButton
       'icon': 'gear'

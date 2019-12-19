@@ -23,11 +23,13 @@
       "source.json": [
         "ftpconfig"
       ]
+    disabledPackages: [
+      "remember-folds"
+    ]
     ignoredNames: [
       "php-integrator-base"
       "linter"
     ]
-    openEmptyEditorOnStart: true
     restorePreviousWindowsOnStart: "no"
     telemetryConsent: "limited"
     themes: [
@@ -41,7 +43,7 @@
     template: "<% if (projectName) { %><%= projectName %><% } %> - <%= fileName %> - .\\<%= relativeFilePath %>"
   editor:
     autoIndentOnPaste: false
-    fontSize: 15
+    fontSize: 16
     preferredLineLength: 180
     scrollPastEnd: true
     tabLength: 3
