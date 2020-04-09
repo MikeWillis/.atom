@@ -89,4 +89,16 @@
       "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Favor Favor\\website\\httpdocs\\includes\\bundles"
     ]
   }
+  {
+    title: "MW Photography"
+    paths: [
+      "D:\\My Projects\\MikeWillisPhotography\\website"
+    ]
+  }
+  {
+    title: "React Learning"
+    paths: [
+      "D:\\My Projects\\React\\Learning"
+    ]
+  }
 ]

@@ -77,5 +77,7 @@
   'Self Executing Function':
     'prefix': 'sef'
     'body': '(function(){\n\t${1://code}\n})();'
-
+  'GetElByID':
+    'prefix': 'gbi'
+    'body': 'document.getElementById("${1:}")'
 
