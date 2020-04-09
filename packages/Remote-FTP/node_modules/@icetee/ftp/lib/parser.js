@@ -201,7 +201,9 @@ class Parser extends EventEmitter {
       hour = parseInt(retMsdos.hour, 10);
       mins = parseInt(retMsdos.minute, 10);
 
-      year += (year < 70) ? 2000 : 1900;
+      if (year.toString().length < 4) {
+        year += (year < 70) ? 2000 : 1900;
+      }
 
       if (retMsdos.ampm[0].toLowerCase() === 'p' && hour < 12) {
         hour += 12;

@@ -19,17 +19,16 @@
     backspaceTriggersAutocomplete: true
   core:
     allowPendingPaneItems: false
+    audioBeep: false
     customFileTypes:
       "source.json": [
         "ftpconfig"
       ]
-    disabledPackages: [
-      "remember-folds"
-    ]
     ignoredNames: [
       "php-integrator-base"
       "linter"
     ]
+    openEmptyEditorOnStart: false
     restorePreviousWindowsOnStart: "no"
     telemetryConsent: "limited"
     themes: [
@@ -81,6 +80,7 @@
   "remote-ftp":
     connector:
       autoUploadOnSave: "never"
+      sshConfigPath: "~/.ssh/known_hosts"
     notifications:
       enableTransfer: true
     statusbar:

@@ -1,7 +1,6 @@
 const {CompositeDisposable} = require('atom');
 
 module.exports = class ToolBarButtonView {
-
   constructor (options, group) {
     this.element = document.createElement('button');
     this.subscriptions = new CompositeDisposable();
@@ -57,6 +56,21 @@ module.exports = class ToolBarButtonView {
         this.element.innerHTML = options.text;
       } else {
         this.element.textContent = options.text;
+      }
+    }
+
+    if (options.color) {
+      this.element.style.color = options.color;
+    }
+    if (options.background) {
+      this.element.style.background = options.background;
+    }
+
+    if (options.class) {
+      if (Array.isArray(options.class)) {
+        this.element.classList.add(...options.class);
+      } else {
+        this.element.classList.add(options.class);
       }
     }
 
@@ -147,10 +161,10 @@ module.exports = class ToolBarButtonView {
 function getTooltipPlacement () {
   const toolbarPosition = atom.config.get('tool-bar.position');
   return toolbarPosition === 'Top' ? 'bottom'
-       : toolbarPosition === 'Right' ? 'left'
-       : toolbarPosition === 'Bottom' ? 'top'
-       : toolbarPosition === 'Left' ? 'right'
-       : null;
+    : toolbarPosition === 'Right' ? 'left'
+      : toolbarPosition === 'Bottom' ? 'top'
+        : toolbarPosition === 'Left' ? 'right'
+          : null;
 }
 
 function getCallbackModifier (callback, {altKey, ctrlKey, shiftKey}) {

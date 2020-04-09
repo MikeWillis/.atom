@@ -2,7 +2,6 @@ const {CompositeDisposable, Emitter} = require('atom');
 const rafDebounce = require('./raf-debounce');
 
 module.exports = class ToolBarView {
-
   constructor () {
     this.element = document.createElement('div');
     this.element.classList.add('tool-bar');
@@ -128,7 +127,10 @@ module.exports = class ToolBarView {
     this.element.classList.remove(
       'tool-bar-12px',
       'tool-bar-16px',
+      'tool-bar-18px',
+      'tool-bar-21px',
       'tool-bar-24px',
+      'tool-bar-28px',
       'tool-bar-32px'
     );
     this.element.classList.add(`tool-bar-${size}`);

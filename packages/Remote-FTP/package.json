@@ -1,25 +1,25 @@
 {
-  "_from": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.2/tarball",
-  "_id": "remote-ftp@2.2.2",
+  "_from": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.4/tarball",
+  "_id": "remote-ftp@2.2.4",
   "_inBundle": false,
-  "_integrity": "sha512-XEv5FcQQQmGDDz1ksKpclmaNaVy5YftWzgMmOSuez1nuhWekIiYHngdS0b+ATYcDqWqCNqYDA8/U7pGWSjf7Jg==",
+  "_integrity": "sha512-ZjVzTX+MQ0X/bP0SFm0z8Aww9Y1KXpVnURzloF6OrI0mGHLSHYtBHQduPeYbS/oTqBsd3QAv/VaIpMHw4Aw2EQ==",
   "_location": "/remote-ftp",
   "_phantomChildren": {},
   "_requested": {
     "type": "remote",
-    "raw": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.2/tarball",
-    "rawSpec": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.2/tarball",
-    "saveSpec": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.2/tarball",
-    "fetchSpec": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.2/tarball"
+    "raw": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.4/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.4/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.4/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.4/tarball"
   },
   "_requiredBy": [
     "#USER",
     "/"
   ],
-  "_resolved": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.2/tarball",
-  "_shasum": "39e8731f9d49b167b0fccc8209327607f6946822",
-  "_spec": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.2/tarball",
-  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-11976-25016-1on2gdb.jz74",
+  "_resolved": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.4/tarball",
+  "_shasum": "28e4bc3ef25407d47cbab7eb16ed7614b70bb33c",
+  "_spec": "https://www.atom.io/api/packages/remote-ftp/versions/2.2.4/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-120027-14348-1jlanlo.nqni",
   "activationCommands": [],
   "bugs": {
     "url": "https://github.com/icetee/remote-ftp/issues"
@@ -38,15 +38,15 @@
     }
   },
   "dependencies": {
-    "@icetee/ftp": "^1.0.3",
+    "@icetee/ftp": "^1.0.5",
     "atom-space-pen-views": "^2.2.0",
     "cson-parser": "^3.0.0",
     "event-kit": "^2.5.3",
-    "fs-plus": "^3.0.2",
+    "fs-plus": "^3.1.1",
     "ignore": "^4.0.6",
-    "ssh-config": "^1.0.1",
-    "ssh2": "^0.6.1",
-    "ssh2-streams": "^0.2.0",
+    "ssh-config": "^3.0.0",
+    "ssh2": "^0.8.7",
+    "ssh2-streams": "^0.4.8",
     "strip-json-comments": "^2.0.1"
   },
   "deprecated": false,
@@ -69,5 +69,5 @@
     "type": "git",
     "url": "git+https://github.com/icetee/remote-ftp.git"
   },
-  "version": "2.2.2"
+  "version": "2.2.4"
 }

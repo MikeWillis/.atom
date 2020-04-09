@@ -32,10 +32,13 @@ On which edge of the editor should the tool bar appear. Possible options:
 
 ### Icon size
 
-*   Very Small *(12px)*
-*   Small *(16px)*
+*   Tiny *(12px)*
+*   Very Small *(16px)*
+*   Small: *(18px)*
+*   Medium: *(21px)*
 *   Big *(24px)*
-*   Large *(32px)*
+*   Very Big *(28px)*
+*   Huge *(32px)*
 
 ### Visibility
 
@@ -55,15 +58,13 @@ currently) it can display up to seven tool bar buttons there.
 
 *   [Flex Tool Bar](https://atom.io/packages/flex-tool-bar)
 *   [Tool Bar Main](https://atom.io/packages/tool-bar-main)
-*   [Toolbar Almighty](https://atom.io/packages/tool-bar-almighty)
 *   [Toolbar for Atom](https://atom.io/packages/tool-bar-atom)
-*   [Toolbar Shortcuts](https://atom.io/packages/tool-bar-shortcuts)
+*   [Juno Plus](https://atom.io/packages/juno-plus) in TypeScript
 *   And [more](https://atom.io/packages/search?utf8=%E2%9C%93&q=keyword%3Atool-bar)...
 
 ## Packages using tool-bar
 
 *   [Particle Dev](https://atom.io/packages/spark-dev)
-*   [Facebook Nuclide](https://atom.io/packages/nuclide)
 *   [PlatformIO IDE](https://atom.io/packages/platformio-ide)
 *   [Organized](https://atom.io/packages/organized)
 
@@ -201,6 +202,28 @@ export function consumeToolBar(getToolBar) {
     callback: 'application:about'
   });
 
+  // Text buttons can be colored
+  toolBar.addButton({
+    icon: 'octoface',
+    callback: 'application:about',
+    tooltip: 'About Atom',
+    color: 'red' // color of the text or icon
+    background: 'black' // color of the background
+  });
+
+  // Buttons can be styled with arbitrary CSS through classes.
+  // An example of how the class can be used is show below.
+  toolBar.addButton({
+    icon: 'octoface',
+    callback: 'application:about',
+    class: 'my-awesome-class'
+  });
+  toolBar.addButton({
+    icon: 'octoface',
+    callback: 'application:about',
+    class: ['multiple', 'classes', 'also', 'works']
+  });
+
   // Cleaning up when tool bar is deactivated
   toolBar.onDidDestroy(() => {
     this.toolBar = null;
@@ -209,9 +232,22 @@ export function consumeToolBar(getToolBar) {
 }
 ```
 
+```css
+/*
+Follow the instructions at:
+https://flight-manual.atom.io/using-atom/sections/basic-customization/#style-tweaks
+to define your classes.
+*/
+.my-awesome-class {
+  background-image: url(data:image/svg+xml;base64,...);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+```
+
 ## Methods
 
-### `.addButton({icon, iconset, text, html, callback, priority, tooltip, data})`
+### `.addButton({icon, iconset, text, html, callback, priority, tooltip, data, color, background})`
 
 The method `addButton` requires an object with at least the property `callback`. The
 `callback` must be an Atom command string, a custom callback function or an
@@ -224,8 +260,11 @@ The remaining properties
 `html` (default `false`),
 `icon` (default there is no icon),
 `iconset` (defaults to `Octicons`),
-`data`, and
-`priority` (defaults `50`)
+`data`,
+`priority` (defaults `50`),
+`color`,
+`background`, and
+`class`
 are optional.
 
 The `tooltip` option may be a `string` or an `object` that is passed to Atom's

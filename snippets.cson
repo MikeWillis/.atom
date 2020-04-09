@@ -54,6 +54,9 @@
   'FindDelimiter':
     'prefix': 'dlm'
     'body': 'if ( strpos( trim(\$STRING), "\\\\t" ) !== false ) {\n\t\$delim = "\\\\t";\n} elseif ( strpos( trim(\$STRING), " " ) !== false ) {\n\t\$delim = " ";\n} elseif ( strpos( trim(\$STRING), "," ) !== false ) {\n\t\$delim = ",";\n} else {\n\t\$delim = false;\n}\nif ( \$delim ) {\n\t$WHATEVER = explode( $delim, trim(\$STRING) );\n}'
+  'PHPMailer6':
+    'prefix': 'pm6'
+    'body': '/*Paths may need to be adjusted! Other stuff may need to be adjusted! This is just a rough starting point!\n* Remember: the part that declares PHPMailer CANNOT be enclosed in {} in any way!\n* Don\'t ask me why, it\'s stupid, just make sure it\'s not enclosed in curlies. Usually that means\n* putting it at the top of the script. The rest of the code that defines the mail object etc can be\n* placed wherever you want\n*/\n\nuse PHPMailer\\\\PHPMailer\\\\PHPMailer;\nrequire $GLOBALS["BasePath"] . "htdocs/ps/PHPMailer6/src/Exception.php";\nrequire $GLOBALS["BasePath"] . "htdocs/ps/PHPMailer6/src/OAuth.php";\nrequire $GLOBALS["BasePath"] . "htdocs/ps/PHPMailer6/src/PHPMailer.php";\nrequire $GLOBALS["BasePath"] . "htdocs/ps/PHPMailer6/src/POP3.php";\nrequire $GLOBALS["BasePath"] . "htdocs/ps/PHPMailer6/src/SMTP.php";\n\n$mail = new PHPMailer();\n$mail->IsSMTP();\n$mail->SMTPAuth = false;\n$mail->IsHTML(true);\n$mailServer = chooseMailServer( $mail );\nif ( $mailServer["status"] ) {\n\t$mail = $mailServer["mail"];\n} else {\n\techo "<pre>" . print_r( $mailServer, 1 ) . "</pre>";\n}\n\n$mail->From = "WHOEVER@WHEREVER.com";\n$mail->AddAddress("WHOEVER@WHEREVER.com");\n\n$mail->Subject = "SUBJECT";\n$EmailBody = "<p>EMAILBODY</p>";\n$mail->Body = $EmailBody;\nif ( !$mail->Send() ) {\n\techo "email could not send :(";\n} else {\n\techo "email sent :)";\n}'
 
 '.source.js':
   '$ Doc Ready':
