@@ -194,10 +194,10 @@ module.exports =
         'callback': 'markdown-preview:toggle'
         'tooltip': 'Markdown Preview'
 
-    if atom.packages.loadedPackages['atom-html-preview']
+    if atom.packages.loadedPackages['browser-plus']
       @toolBar.addButton
         'icon': 'globe'
-        'callback': 'atom-html-preview:toggle'
+        'callback': 'browser-plus:open'
         'tooltip': 'HTML Preview'
 
     @toolBar.addButton

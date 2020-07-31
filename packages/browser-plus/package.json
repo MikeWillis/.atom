@@ -1,0 +1,70 @@
+{
+  "_from": "https://www.atom.io/api/packages/browser-plus/versions/0.0.98/tarball",
+  "_id": "browser-plus@0.0.98",
+  "_inBundle": false,
+  "_integrity": "sha512-Eo541knmw8mnRgj4YHIOBiIlj7FuKrUwHTeUv05Rz/cSyLP9NOr94mYb896cJO9GYcGSjRIZ6GZgI3VAHEdNmQ==",
+  "_location": "/browser-plus",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/browser-plus/versions/0.0.98/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/browser-plus/versions/0.0.98/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/browser-plus/versions/0.0.98/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/browser-plus/versions/0.0.98/tarball"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://www.atom.io/api/packages/browser-plus/versions/0.0.98/tarball",
+  "_shasum": "674383fb458e6ac0318d7911aa2482bc70ab2769",
+  "_spec": "https://www.atom.io/api/packages/browser-plus/versions/0.0.98/tarball",
+  "_where": "C:\\Users\\MIKEW~1\\AppData\\Local\\Temp\\apm-install-dir-2020631-370388-ydlgkk.gyz6",
+  "bugs": {
+    "url": "https://github.com/skandasoft/browser-plus/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "JSON2": "~0.1.0",
+    "atom-space-pen-views": "~2.0.3",
+    "cheerio": "~0.20.0",
+    "jquery": "^2.1.4",
+    "jquery-ui": "1.10.5",
+    "jstorage": "~0.4.8",
+    "lodash": "~3.10.1",
+    "node-uuid": ">=1.4.7",
+    "theorist": "~1.0.2"
+  },
+  "deprecated": false,
+  "description": "Browser Plus - Real Browser in Atom",
+  "engines": {
+    "atom": ">=0.174.0 <2.0.0"
+  },
+  "homepage": "https://github.com/skandasoft/browser-plus#readme",
+  "keywords": [
+    "browser",
+    "webbrowser",
+    "web view",
+    "web-view",
+    "html preview",
+    "html",
+    "preview",
+    "preview-plus"
+  ],
+  "license": "MIT",
+  "main": "./lib/browser-plus",
+  "name": "browser-plus",
+  "providedServices": {
+    "browser-plus": {
+      "description": "provide logic for blocking uri",
+      "versions": {
+        "0.0.51": "provideService"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skandasoft/browser-plus.git"
+  },
+  "version": "0.0.98"
+}

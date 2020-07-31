@@ -10,6 +10,7 @@
       _analyticsUserId: "5246c0c3-a2dc-4b16-a60d-15048682f57f"
     js:
       indent_size: 3
+  "atom-browser": {}
   "autoclose-html":
     forceInline: [
       "*"
