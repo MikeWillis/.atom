@@ -28,7 +28,7 @@
     "JSON2": "~0.1.0",
     "atom-space-pen-views": "~2.0.3",
     "cheerio": "~0.20.0",
-    "jquery": "^2.1.4",
+    "jquery": "^3.5.1",
     "jquery-ui": "1.10.5",
     "jstorage": "~0.4.8",
     "lodash": "~3.10.1",
