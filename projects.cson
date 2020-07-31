@@ -90,9 +90,21 @@
     ]
   }
   {
-    title: "FF React"
+    title: "MW Photography"
     paths: [
-      "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Favor Favor\\website\\ff_react"
+      "D:\\My Projects\\MikeWillisPhotography\\website"
     ]
+  }
+  {
+    title: "React Learning"
+    paths: [
+      "D:\\My Projects\\React\\Learning"
+    ]
+  }
+  {
+     title: "FF React"
+     paths: [
+        "C:\\Users\\Mike W\\OneDrive - Fashion Craft\\My Projects\\Favor Favor\\website\\ff_react"
+     ]
   }
 ]

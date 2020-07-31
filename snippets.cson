@@ -77,5 +77,13 @@
   'Self Executing Function':
     'prefix': 'sef'
     'body': '(function(){\n\t${1://code}\n})();'
-
+  'GetElByID':
+    'prefix': 'gbi'
+    'body': 'document.getElementById("${1:}")'
+  'ReactRender - Query Selector':
+    'prefix': 'rrq'
+    'body': 'ReactDOM.render( <${1:} />, document.querySelector( "${2:}" ) );'
+  'ReactReder - getElByID':
+    'prefix': 'rrd'
+    'body': 'ReactDOM.render( <${1:} />, document.getElementById( "${2:}" ) );'
 
